@@ -18,6 +18,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -100,6 +102,41 @@ class SolicitudControllerIntegrationTest {
         assertThat(response.getBody()).hasSize(1);
         assertThat(response.getBody()[0].getTipoAyuda()).isEqualTo(TipoAyuda.AGUA);
         assertThat(response.getBody()[0].getDescripcion()).isEqualTo("Cerca del punto de busqueda");
+    }
+
+    @Test
+    void crearSolicitud_alLlegarCuartaCercana_marcaClusterComoUrgenteSinDescartarDatos() {
+        // Punto alejado de los demas tests de esta clase para no compartir datos con ellos
+        // (el contenedor de Postgres es estatico y se reusa entre metodos de test).
+        double lat = 5.0000;
+        double lng = -77.0000;
+
+        crear(TipoAyuda.AGUA, "Primera solicitud del cluster", lat, lng);
+        crear(TipoAyuda.AGUA, "Segunda solicitud del cluster", lat + 0.0001, lng);
+        crear(TipoAyuda.AGUA, "Tercera solicitud del cluster", lat + 0.0002, lng);
+        crear(TipoAyuda.AGUA, "Cuarta solicitud del cluster", lat + 0.0003, lng);
+
+        String url = urlBase() + "?lat=" + lat + "&lng=" + lng + "&radio=1000&tipo=AGUA";
+        ResponseEntity<SolicitudResponse[]> response = restTemplate.getForEntity(url, SolicitudResponse[].class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        SolicitudResponse[] solicitudes = response.getBody();
+        assertThat(solicitudes).isNotNull();
+        // Agrupar nunca descarta datos: las 4 solicitudes siguen existiendo individualmente.
+        assertThat(solicitudes).hasSize(4);
+
+        List<SolicitudResponse> urgentes = Arrays.stream(solicitudes)
+                .filter(SolicitudResponse::isUrgente)
+                .toList();
+        assertThat(urgentes).hasSize(1);
+        assertThat(urgentes.get(0).getDescripcion()).isEqualTo("Primera solicitud del cluster");
+        assertThat(urgentes.get(0).getSolicitudesAgrupadas()).isEqualTo(4);
+
+        List<SolicitudResponse> noUrgentes = Arrays.stream(solicitudes)
+                .filter(s -> !s.isUrgente())
+                .toList();
+        assertThat(noUrgentes).hasSize(3);
+        assertThat(noUrgentes).allSatisfy(s -> assertThat(s.getSolicitudesAgrupadas()).isEqualTo(1));
     }
 
     private void crear(TipoAyuda tipo, String descripcion, double lat, double lng) {
