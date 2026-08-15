@@ -1,0 +1,196 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="ReconstruyeCol — Ayuda humanitaria terremoto Chocó">
+  <main>
+    <header class="hero">
+      <p class="kicker">Terremoto Chocó · agosto 2026</p>
+      <h1>Conectemos ayuda con quien la necesita</h1>
+      <p class="subtitle">
+        Publica lo que necesitas o lo que puedes ofrecer. Sin registro, sin
+        dinero de por medio: la ayuda se coordina directamente entre
+        personas.
+      </p>
+    </header>
+
+    <section class="choices" aria-label="Qué quieres hacer">
+      <a class="choice choice--rojo" href="/necesito-ayuda">
+        <span class="choice-icon" aria-hidden="true">🆘</span>
+        <span class="choice-body">
+          <span class="choice-title">Necesito ayuda</span>
+          <span class="choice-desc">
+            Publica qué necesitas y encuentra ayuda cerca de ti.
+          </span>
+        </span>
+        <span class="choice-arrow" aria-hidden="true">→</span>
+      </a>
+
+      <a class="choice choice--azul" href="/quiero-ayudar">
+        <span class="choice-icon" aria-hidden="true">🤝</span>
+        <span class="choice-body">
+          <span class="choice-title">Quiero ayudar</span>
+          <span class="choice-desc">
+            Dona, transporta o comparte tu conocimiento con quien lo necesita.
+          </span>
+        </span>
+        <span class="choice-arrow" aria-hidden="true">→</span>
+      </a>
+    </section>
+
+    <footer class="footer">
+      <p>
+        Nadie en esta plataforma maneja tu dinero. El contacto se hace
+        directamente por WhatsApp o correo, solo si tú decides compartirlo.
+      </p>
+    </footer>
+  </main>
+</Layout>
+
+<style>
+  main {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 40px;
+    padding: 32px 20px 40px;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .hero {
+    text-align: center;
+  }
+
+  .kicker {
+    margin: 0 0 8px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--co-rojo);
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin: 0 0 12px;
+    font-size: clamp(28px, 7vw, 40px);
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .subtitle {
+    margin: 0 auto;
+    max-width: 46ch;
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .choice {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    text-decoration: none;
+    color: var(--text);
+    min-height: 44px;
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease,
+      border-color 0.15s ease;
+  }
+
+  .choice:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.05),
+      0 14px 32px rgba(0, 0, 0, 0.08);
+  }
+
+  .choice:active {
+    transform: translateY(0) scale(0.99);
+  }
+
+  .choice--rojo {
+    border-color: rgba(206, 17, 38, 0.18);
+  }
+
+  .choice--rojo .choice-icon {
+    background: rgba(206, 17, 38, 0.1);
+  }
+
+  .choice--azul {
+    border-color: rgba(0, 56, 147, 0.18);
+  }
+
+  .choice--azul .choice-icon {
+    background: rgba(0, 56, 147, 0.1);
+  }
+
+  .choice-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    font-size: 24px;
+  }
+
+  .choice-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+  }
+
+  .choice-title {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .choice-desc {
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--text-secondary);
+  }
+
+  .choice-arrow {
+    flex-shrink: 0;
+    font-size: 18px;
+    color: var(--text-secondary);
+  }
+
+  .footer {
+    text-align: center;
+  }
+
+  .footer p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+
+  @media (min-width: 640px) {
+    main {
+      gap: 56px;
+      padding-top: 64px;
+    }
+  }
+</style>

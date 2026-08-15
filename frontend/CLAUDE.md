@@ -12,8 +12,6 @@ Contexto general del producto: `../CLAUDE.md`. Diseño técnico detallado: `../d
 
 ## Comandos
 
-> Actualizar esta sección en cuanto exista el proyecto real generado.
-
 - Instalar dependencias: `npm install`
 - Modo desarrollo: `npm run dev`
 - Build de producción: `npm run build`

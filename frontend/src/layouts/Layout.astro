@@ -1,0 +1,47 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = "Conecta con personas y organizaciones que pueden ayudarte tras el terremoto en Chocó, o encuentra a quién ayudar cerca de ti. Sin registro, sin dinero de por medio.",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <div class="flag-bar" aria-hidden="true"></div>
+    <slot />
+  </body>
+</html>
+
+<style>
+  /* Franja tricolor sutil, referencia a la bandera sin usar un ícono literal */
+  .flag-bar {
+    height: 4px;
+    width: 100%;
+    background: linear-gradient(
+      to right,
+      var(--co-amarillo) 0%,
+      var(--co-amarillo) 50%,
+      var(--co-azul) 50%,
+      var(--co-azul) 75%,
+      var(--co-rojo) 75%,
+      var(--co-rojo) 100%
+    );
+  }
+</style>
