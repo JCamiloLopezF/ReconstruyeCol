@@ -1,0 +1,387 @@
+---
+import { TIPOS_AYUDA } from "../lib/tipos-ayuda";
+
+interface Props {
+  tipo: "solicitud" | "oferta";
+}
+
+const { tipo } = Astro.props;
+const esSolicitud = tipo === "solicitud";
+---
+
+<form id="formulario-publicacion" class="formulario" data-tipo={tipo} novalidate>
+  <div class="campo">
+    <label for="campo-tipo">Tipo de ayuda</label>
+    <select id="campo-tipo" name="tipoAyuda" required>
+      <option value="" selected disabled>Selecciona una opción</option>
+      {TIPOS_AYUDA.map((t) => <option value={t.value}>{t.label}</option>)}
+    </select>
+  </div>
+
+  <div class="campo">
+    <label for="campo-descripcion">
+      {esSolicitud ? "¿Qué necesitas?" : "¿Qué puedes ofrecer?"}
+    </label>
+    <textarea
+      id="campo-descripcion"
+      name="descripcion"
+      required
+      maxlength="500"
+      rows="3"
+      placeholder={esSolicitud
+        ? "Ej: Agua potable para 4 personas, hay un adulto mayor"
+        : "Ej: Tengo una camioneta y puedo transportar donaciones"}
+    ></textarea>
+  </div>
+
+  <div class="campo">
+    <span class="campo-label" id="etiqueta-ubicacion">Tu ubicación</span>
+    <button type="button" id="boton-ubicacion" class="boton-secundario" aria-describedby="estado-ubicacion">
+      📍 Usar mi ubicación actual
+    </button>
+    <p id="estado-ubicacion" class="estado-ubicacion" role="status">
+      Necesitamos tu ubicación aproximada para que puedan encontrarte cerca.
+    </p>
+  </div>
+
+  <div class="campo">
+    <label for="campo-whatsapp">WhatsApp (opcional)</label>
+    <input id="campo-whatsapp" name="contactoWhatsapp" type="tel" inputmode="tel" placeholder="Ej: 3001234567" />
+  </div>
+
+  <div class="campo">
+    <label for="campo-email">Correo (opcional)</label>
+    <input id="campo-email" name="contactoEmail" type="email" placeholder="tucorreo@ejemplo.com" />
+  </div>
+
+  <p class="ayuda-contacto">Debes dejar al menos un WhatsApp o un correo para que puedan contactarte.</p>
+
+  <div class="campo campo-checkbox">
+    <input id="campo-consentimiento" name="consentimiento" type="checkbox" required />
+    <label for="campo-consentimiento">
+      Acepto que esta información (incluida mi ubicación aproximada y mi contacto) se muestre
+      públicamente para que puedan ayudarme. <a href="/aviso-privacidad">Ver aviso de privacidad</a>.
+    </label>
+  </div>
+
+  <p id="mensaje-error" class="mensaje-error" role="alert" hidden></p>
+
+  <button type="submit" id="boton-enviar" class="boton-primario">
+    {esSolicitud ? "Publicar solicitud" : "Publicar oferta"}
+  </button>
+</form>
+
+<div id="pantalla-exito" class="pantalla-exito" hidden>
+  <span class="exito-icono" aria-hidden="true">✅</span>
+  <h2>{esSolicitud ? "¡Tu solicitud fue publicada!" : "¡Tu oferta fue publicada!"}</h2>
+  <p>
+    Guarda este código: es la única forma de marcar tu publicación como atendida más adelante,
+    ya que no necesitas cuenta ni contraseña.
+  </p>
+  <div class="exito-token">
+    <code id="exito-token-valor"></code>
+    <button type="button" id="boton-copiar-token" class="boton-secundario">Copiar</button>
+  </div>
+  <a id="exito-enlace-correo" class="boton-secundario" hidden>✉️ Enviarme este código por correo</a>
+  <a href="/" class="boton-texto">Volver al inicio</a>
+</div>
+
+<style>
+  .formulario {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label,
+  .campo-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  select,
+  textarea,
+  input[type="tel"],
+  input[type="email"] {
+    font: inherit;
+    font-size: 16px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    min-height: 44px;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  .boton-secundario {
+    align-self: flex-start;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 12px 16px;
+    min-height: 44px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--co-azul);
+    background: var(--surface);
+    color: var(--co-azul);
+    cursor: pointer;
+  }
+
+  .boton-secundario:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .estado-ubicacion {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--text-secondary);
+  }
+
+  .ayuda-contacto {
+    margin: -8px 0 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .campo-checkbox {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .campo-checkbox input {
+    margin-top: 3px;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .campo-checkbox label {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+
+  .campo-checkbox a {
+    color: var(--co-azul);
+    font-weight: 600;
+  }
+
+  .mensaje-error {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    background: rgba(206, 17, 38, 0.08);
+    border: 1px solid rgba(206, 17, 38, 0.3);
+    color: var(--co-rojo);
+    font-size: 14px;
+  }
+
+  .boton-primario {
+    font: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 14px 20px;
+    min-height: 48px;
+    border-radius: var(--radius-md);
+    border: none;
+    background: var(--co-rojo);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .boton-primario:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .pantalla-exito {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    padding: 24px 4px;
+  }
+
+  .exito-icono {
+    font-size: 40px;
+  }
+
+  .pantalla-exito h2 {
+    margin: 0;
+    font-size: 22px;
+    color: var(--text);
+  }
+
+  .pantalla-exito p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    max-width: 40ch;
+  }
+
+  .exito-token {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  .exito-token code {
+    font-size: 14px;
+    word-break: break-all;
+  }
+
+  .boton-texto {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--co-azul);
+    text-decoration: none;
+    margin-top: 4px;
+  }
+</style>
+
+<script>
+  import { crearSolicitud, crearOferta, ApiError } from "../lib/api";
+  import { obtenerUbicacionActual, type Coordenadas } from "../lib/geolocalizacion";
+  import type { TipoAyuda } from "../lib/tipos-ayuda";
+
+  const formulario = document.getElementById("formulario-publicacion") as HTMLFormElement | null;
+  const botonUbicacion = document.getElementById("boton-ubicacion") as HTMLButtonElement | null;
+  const estadoUbicacion = document.getElementById("estado-ubicacion");
+  const mensajeError = document.getElementById("mensaje-error");
+  const botonEnviar = document.getElementById("boton-enviar") as HTMLButtonElement | null;
+  const pantallaExito = document.getElementById("pantalla-exito");
+  const tokenValor = document.getElementById("exito-token-valor");
+  const botonCopiar = document.getElementById("boton-copiar-token") as HTMLButtonElement | null;
+  const enlaceCorreo = document.getElementById("exito-enlace-correo") as HTMLAnchorElement | null;
+
+  let ubicacion: Coordenadas | null = null;
+
+  function mostrarError(texto: string): void {
+    if (!mensajeError) return;
+    mensajeError.textContent = texto;
+    mensajeError.hidden = false;
+  }
+
+  function ocultarError(): void {
+    if (!mensajeError) return;
+    mensajeError.hidden = true;
+    mensajeError.textContent = "";
+  }
+
+  function mostrarExito(token: string, email: string, tipo: "solicitud" | "oferta"): void {
+    if (!formulario || !pantallaExito || !tokenValor) return;
+    formulario.hidden = true;
+    pantallaExito.hidden = false;
+    tokenValor.textContent = token;
+
+    if (botonCopiar) {
+      botonCopiar.addEventListener("click", () => {
+        navigator.clipboard?.writeText(token).then(() => {
+          botonCopiar.textContent = "¡Copiado!";
+        });
+      });
+    }
+
+    if (enlaceCorreo && email) {
+      const asunto = `Tu código para gestionar tu ${tipo} en ReconstruyeCol`;
+      const cuerpo = `Guarda este código: ${token}\n\nLo vas a necesitar para marcar tu publicación como atendida cuando ya no la necesites.`;
+      enlaceCorreo.href = `mailto:${email}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+      enlaceCorreo.hidden = false;
+    }
+  }
+
+  if (formulario && botonUbicacion && estadoUbicacion && mensajeError && botonEnviar) {
+    const tipo: "solicitud" | "oferta" = formulario.dataset.tipo === "oferta" ? "oferta" : "solicitud";
+    const textoBotonEnvio = tipo === "oferta" ? "Publicar oferta" : "Publicar solicitud";
+
+    botonUbicacion.addEventListener("click", async () => {
+      botonUbicacion.disabled = true;
+      estadoUbicacion.textContent = "Obteniendo tu ubicación...";
+      try {
+        ubicacion = await obtenerUbicacionActual();
+        estadoUbicacion.textContent = "✅ Ubicación obtenida. Ya puedes enviar el formulario.";
+      } catch (error) {
+        estadoUbicacion.textContent =
+          error instanceof Error ? error.message : "No se pudo obtener tu ubicación.";
+      } finally {
+        botonUbicacion.disabled = false;
+      }
+    });
+
+    formulario.addEventListener("submit", async (evento) => {
+      evento.preventDefault();
+      ocultarError();
+
+      const datos = new FormData(formulario);
+      const tipoAyuda = String(datos.get("tipoAyuda") || "");
+      const descripcion = String(datos.get("descripcion") || "").trim();
+      const contactoWhatsapp = String(datos.get("contactoWhatsapp") || "").trim();
+      const contactoEmail = String(datos.get("contactoEmail") || "").trim();
+      const consentimiento = datos.get("consentimiento") === "on";
+
+      if (!tipoAyuda) {
+        mostrarError("Selecciona un tipo de ayuda.");
+        return;
+      }
+      if (!descripcion) {
+        mostrarError("Escribe una descripción.");
+        return;
+      }
+      if (!ubicacion) {
+        mostrarError("Usa el botón de ubicación antes de enviar.");
+        return;
+      }
+      if (!contactoWhatsapp && !contactoEmail) {
+        mostrarError("Deja al menos un WhatsApp o un correo de contacto.");
+        return;
+      }
+      if (!consentimiento) {
+        mostrarError("Debes aceptar el aviso de privacidad para continuar.");
+        return;
+      }
+
+      botonEnviar.disabled = true;
+      botonEnviar.textContent = "Enviando...";
+
+      try {
+        const crear = tipo === "oferta" ? crearOferta : crearSolicitud;
+        const respuesta = await crear({
+          tipoAyuda: tipoAyuda as TipoAyuda,
+          descripcion,
+          lat: ubicacion.lat,
+          lng: ubicacion.lng,
+          contactoWhatsapp: contactoWhatsapp || undefined,
+          contactoEmail: contactoEmail || undefined,
+        });
+
+        mostrarExito(respuesta.tokenGestion, contactoEmail, tipo);
+      } catch (error) {
+        const mensaje = error instanceof ApiError ? error.message : "No se pudo publicar. Intenta de nuevo.";
+        mostrarError(mensaje);
+        botonEnviar.disabled = false;
+        botonEnviar.textContent = textoBotonEnvio;
+      }
+    });
+  }
+</script>

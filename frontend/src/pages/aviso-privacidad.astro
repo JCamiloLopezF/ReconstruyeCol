@@ -1,0 +1,89 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Aviso de privacidad — ReconstruyeCol">
+  <main>
+    <a class="back" href="/">← Volver</a>
+    <h1>Aviso de privacidad</h1>
+
+    <p>
+      ReconstruyeCol conecta directamente a personas afectadas por el terremoto con
+      voluntarios y organizaciones que pueden ayudar. No manejamos dinero y no exigimos
+      registro para publicar una solicitud u oferta de ayuda.
+    </p>
+
+    <h2>Qué datos publicamos</h2>
+    <p>
+      Cuando publicas una solicitud u oferta, tu ubicación se muestra de forma aproximada
+      (no tu dirección exacta) para que otras personas puedan ubicarte en el mapa. El
+      WhatsApp o correo que decidas dejar se muestra tal cual lo escribiste, porque es la
+      única forma de que alguien te contacte directamente: no hay chat interno en la
+      plataforma.
+    </p>
+
+    <h2>Qué puedes hacer con tus datos</h2>
+    <p>
+      Puedes pedir la eliminación de tu publicación en cualquier momento usando el código
+      que te entregamos al publicarla (<code>token_gestion</code>), o escribiéndonos
+      directamente al equipo administrador.
+    </p>
+
+    <h2>Tratamiento conforme a la Ley 1581 de 2012</h2>
+    <p>
+      Tratamos tus datos personales de acuerdo con la Ley 1581 de 2012 de protección de
+      datos personales de Colombia. Solo se usan para conectar tu publicación con quien
+      pueda ayudarte o recibir tu ayuda — nunca se venden ni se comparten con terceros
+      fuera de ese propósito.
+    </p>
+  </main>
+</Layout>
+
+<style>
+  main {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 32px 20px 48px;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  .back {
+    align-self: flex-start;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--co-azul);
+    text-decoration: none;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    margin: 0 0 4px;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  h2 {
+    margin: 12px 0 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+
+  code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1px 6px;
+  }
+</style>

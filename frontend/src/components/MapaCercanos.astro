@@ -1,0 +1,210 @@
+---
+interface Props {
+  mostrar: "solicitudes" | "ofertas";
+  titulo: string;
+}
+
+const { mostrar, titulo } = Astro.props;
+---
+
+<section class="mapa-seccion" data-mostrar={mostrar}>
+  <button type="button" id="boton-cargar-mapa" class="boton-mapa" data-texto-original={titulo}>
+    🗺️ {titulo}
+  </button>
+  <div id="contenedor-mapa" class="contenedor-mapa" hidden>
+    <p id="mapa-estado" class="mapa-estado" role="status"></p>
+    <div id="mapa" class="mapa"></div>
+  </div>
+</section>
+
+<style>
+  .mapa-seccion {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .boton-mapa {
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 14px 18px;
+    min-height: 48px;
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--co-azul);
+    background: rgba(0, 56, 147, 0.05);
+    color: var(--co-azul);
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .boton-mapa:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
+
+  .contenedor-mapa {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .mapa-estado {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .mapa {
+    width: 100%;
+    height: 320px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  :global(.popup-urgente) {
+    margin: 4px 0;
+    font-weight: 700;
+    color: var(--co-rojo);
+  }
+
+  :global(.popup-reportar) {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+</style>
+
+<script>
+  import { cargarLeaflet } from "../lib/leaflet-loader";
+  import { buscarSolicitudes, buscarOfertas, ApiError, type SolicitudPublica, type OfertaPublica } from "../lib/api";
+  import { obtenerUbicacionActual } from "../lib/geolocalizacion";
+  import { etiquetaTipoAyuda } from "../lib/tipos-ayuda";
+  import { enlaceWhatsapp } from "../lib/whatsapp";
+
+  const RADIO_METROS = 5000;
+  const CONTACTO_ADMIN = import.meta.env.PUBLIC_CONTACTO_ADMIN_EMAIL || "equipo@reconstruyecol.org";
+
+  interface LeafletModulo {
+    map: (el: HTMLElement) => LeafletMapa;
+    tileLayer: (url: string, opts: Record<string, unknown>) => { addTo: (mapa: LeafletMapa) => void };
+    circleMarker: (
+      coords: [number, number],
+      opts: Record<string, unknown>,
+    ) => { addTo: (mapa: LeafletMapa) => LeafletMarcador };
+  }
+  interface LeafletMapa {
+    setView: (coords: [number, number], zoom: number) => LeafletMapa;
+  }
+  interface LeafletMarcador {
+    bindPopup: (html: string) => LeafletMarcador;
+  }
+
+  function escaparHtml(texto: string): string {
+    const div = document.createElement("div");
+    div.textContent = texto;
+    return div.innerHTML;
+  }
+
+  const seccion = document.querySelector<HTMLElement>(".mapa-seccion");
+  const boton = document.getElementById("boton-cargar-mapa") as HTMLButtonElement | null;
+  const contenedor = document.getElementById("contenedor-mapa");
+  const estado = document.getElementById("mapa-estado");
+  const mapaDiv = document.getElementById("mapa");
+
+  if (seccion && boton && contenedor && estado && mapaDiv) {
+    const mostrar = seccion.dataset.mostrar === "ofertas" ? "ofertas" : "solicitudes";
+
+    boton.addEventListener("click", async () => {
+      boton.disabled = true;
+      boton.textContent = "Cargando mapa...";
+      contenedor.hidden = false;
+
+      try {
+        estado.textContent = "Obteniendo tu ubicación...";
+        const ubicacion = await obtenerUbicacionActual();
+
+        estado.textContent = "Cargando mapa...";
+        const L = (await cargarLeaflet()) as LeafletModulo;
+
+        const mapa = L.map(mapaDiv).setView([ubicacion.lat, ubicacion.lng], 13);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; colaboradores de OpenStreetMap",
+          maxZoom: 19,
+        }).addTo(mapa);
+
+        L.circleMarker([ubicacion.lat, ubicacion.lng], {
+          radius: 8,
+          color: "#003893",
+          fillColor: "#003893",
+          fillOpacity: 0.9,
+        })
+          .addTo(mapa)
+          .bindPopup("Tu ubicación aproximada");
+
+        estado.textContent = "Buscando publicaciones cercanas...";
+        const resultados =
+          mostrar === "ofertas"
+            ? await buscarOfertas({ lat: ubicacion.lat, lng: ubicacion.lng, radio: RADIO_METROS })
+            : await buscarSolicitudes({ lat: ubicacion.lat, lng: ubicacion.lng, radio: RADIO_METROS });
+
+        estado.textContent =
+          resultados.length === 0
+            ? "No hay publicaciones cercanas todavía en un radio de 5 km."
+            : `${resultados.length} publicación(es) encontradas en un radio de 5 km.`;
+
+        resultados.forEach((item: SolicitudPublica | OfertaPublica) => {
+          const urgente = "urgente" in item && item.urgente;
+          const color = urgente ? "#ce1126" : mostrar === "ofertas" ? "#003893" : "#48484a";
+
+          const marcador = L.circleMarker([item.lat, item.lng], {
+            radius: urgente ? 11 : 8,
+            color,
+            fillColor: color,
+            fillOpacity: 0.85,
+            weight: urgente ? 3 : 1,
+          }).addTo(mapa);
+
+          const partes: string[] = [`<strong>${escaparHtml(etiquetaTipoAyuda(item.tipoAyuda))}</strong>`];
+
+          if (urgente && "solicitudesAgrupadas" in item) {
+            partes.push(
+              `<p class="popup-urgente">🔴 Urgente — ${item.solicitudesAgrupadas} solicitudes similares</p>`,
+            );
+          }
+
+          partes.push(`<p>${escaparHtml(item.descripcion)}</p>`);
+
+          if (item.contactoWhatsapp) {
+            partes.push(
+              `<a href="${enlaceWhatsapp(item.contactoWhatsapp)}" target="_blank" rel="noopener">📱 WhatsApp</a>`,
+            );
+          }
+          if (item.contactoEmail) {
+            partes.push(`<br /><a href="mailto:${item.contactoEmail}">✉️ Correo</a>`);
+          }
+
+          const asuntoReporte = encodeURIComponent(`Reporte de publicación ${item.id}`);
+          const cuerpoReporte = encodeURIComponent(
+            `Quiero reportar esta publicación (id: ${item.id}) por el siguiente motivo:\n`,
+          );
+          partes.push(
+            `<br /><a class="popup-reportar" href="mailto:${CONTACTO_ADMIN}?subject=${asuntoReporte}&body=${cuerpoReporte}">🚩 Reportar</a>`,
+          );
+
+          marcador.bindPopup(partes.join(""));
+        });
+
+        boton.remove();
+      } catch (error) {
+        boton.disabled = false;
+        boton.textContent = `🗺️ ${boton.dataset.textoOriginal ?? "Ver mapa"}`;
+        const mensaje = error instanceof ApiError || error instanceof Error ? error.message : "No se pudo cargar el mapa.";
+        estado.textContent = mensaje;
+      }
+    });
+  }
+</script>

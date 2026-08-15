@@ -48,6 +48,11 @@ svg {
   max-width: 100%;
 }
 
+/* Garantiza que [hidden] gane aunque un componente fije su propio "display" */
+[hidden] {
+  display: none !important;
+}
+
 a {
   color: inherit;
 }

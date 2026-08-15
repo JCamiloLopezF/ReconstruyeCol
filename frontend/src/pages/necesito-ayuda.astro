@@ -1,31 +1,34 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import FormularioPublicacion from "../components/FormularioPublicacion.astro";
+import MapaCercanos from "../components/MapaCercanos.astro";
 ---
 
 <Layout title="Necesito ayuda — ReconstruyeCol">
   <main>
     <a class="back" href="/">← Volver</a>
-    <span class="icon" aria-hidden="true">🆘</span>
-    <h1>Necesito ayuda</h1>
-    <p>
-      Aquí vas a poder publicar qué necesitas (agua, alimentos, refugio,
-      transporte u otro) para que alguien cerca pueda contactarte. Esta parte
-      del sitio está en construcción.
-    </p>
+    <header class="encabezado">
+      <span class="icon" aria-hidden="true">🆘</span>
+      <h1>Necesito ayuda</h1>
+      <p>
+        Publica qué necesitas (agua, alimentos, refugio, transporte u otro) para que
+        alguien cerca pueda contactarte directamente.
+      </p>
+    </header>
+
+    <FormularioPublicacion tipo="solicitud" />
+
+    <MapaCercanos mostrar="ofertas" titulo="Ver quién ofrece ayuda cerca de ti" />
   </main>
 </Layout>
 
 <style>
   main {
-    min-height: 100dvh;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    gap: 12px;
-    padding: 32px 20px;
-    max-width: 480px;
+    gap: 28px;
+    padding: 24px 20px 48px;
+    max-width: 520px;
     margin: 0 auto;
   }
 
@@ -35,11 +38,18 @@ import Layout from "../layouts/Layout.astro";
     font-weight: 500;
     color: var(--co-azul);
     text-decoration: none;
-    margin-bottom: 12px;
+  }
+
+  .encabezado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
   }
 
   .icon {
-    font-size: 40px;
+    font-size: 36px;
   }
 
   h1 {
@@ -50,10 +60,11 @@ import Layout from "../layouts/Layout.astro";
     color: var(--text);
   }
 
-  p {
+  .encabezado p {
     margin: 0;
-    font-size: 16px;
+    font-size: 15px;
     line-height: 1.5;
     color: var(--text-secondary);
+    max-width: 42ch;
   }
 </style>
