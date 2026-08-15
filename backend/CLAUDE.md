@@ -13,11 +13,12 @@ Contexto general del producto: `../CLAUDE.md`. Diseño técnico detallado: `../d
 
 ## Comandos
 
-> Actualizar esta sección en cuanto exista el proyecto real generado — no dejar comandos sin verificar contra el `pom.xml`/`build.gradle` real.
+Verificados contra el `build.gradle` real (Gradle, Spring Boot 3.5.3, Java 21).
 
-- Build: `./mvnw clean install`
-- Correr local: `./mvnw spring-boot:run`
-- Tests: `./mvnw test`
+- Build: `./gradlew clean build`
+- Compilar sin tests: `./gradlew clean compileJava`
+- Correr local: `./gradlew bootRun` (requiere `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` apuntando a un Postgres con PostGIS; por defecto usa `localhost:5432/ayudaterremoto`)
+- Tests: `./gradlew test`
 
 ## Estructura esperada de paquetes
 

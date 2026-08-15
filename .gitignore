@@ -1,0 +1,12 @@
+# Secretos / entorno
+.env
+.env.*
+!.env.example
+
+# macOS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+*.iml
