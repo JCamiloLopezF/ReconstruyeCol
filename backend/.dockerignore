@@ -1,0 +1,7 @@
+.gradle/
+build/
+*.log
+HELP.md
+.env
+.env.*
+!.env.example
