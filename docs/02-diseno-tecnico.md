@@ -233,7 +233,7 @@ No hay chat interno. Al publicar, el usuario decide qué compartir:
 | Componente | Proveedor recomendado | Motivo |
 |---|---|---|
 | Frontend (Astro) | **Vercel** o **Netlify** | Despliegue automático desde GitHub, capa gratuita generosa, CDN global incluido |
-| Backend (Spring Boot, como contenedor Docker) | **Fly.io** o **Railway** | Ambos soportan contenedores Java sin configuración compleja; Fly.io tiene capa gratuita permanente por app, Railway da crédito mensual gratuito |
+| Backend (Spring Boot, como contenedor Docker) | **Render.com** | Soporta contenedores Docker sin configuración compleja y no exige tarjeta para el plan Free. *(Actualizado: Fly.io, la opción original, eliminó su capa gratuita en 2024 y ahora pide tarjeta desde el registro — ver `03-despliegue.md`.)* |
 | Base de datos PostgreSQL + PostGIS | **Supabase** | Postgres gestionado gratuito con PostGIS habilitable con un clic; también sirve como almacenamiento de archivos (soportes de ingenieros) en el mismo proyecto |
 | Dominio | Subdominio gratuito del proveedor elegido, o dominio propio si ya tienen uno | Para lanzar en 3 días no es crítico tener dominio propio desde el día 1 |
 | CI/CD | GitHub Actions (incluido gratis en repos públicos/privados con límite generoso) | Despliegue automático al hacer push a `main` |
@@ -275,7 +275,7 @@ Pantallas mínimas del MVP:
 - Mapa con Leaflet mostrando pines de solicitudes/ofertas cercanas.
 - Formularios de publicación con geolocalización del navegador.
 - Lógica de agrupación/urgencia (sección 5), versión simple primero.
-- Despliegue a producción (Vercel + Fly.io/Railway + Supabase) y pruebas manuales en móvil.
+- Despliegue a producción (Vercel + Render.com + Supabase) y pruebas manuales en móvil.
 
 **Día 3 (lanzamiento oficial):**
 - Módulo de ingenieros: registro + subida de soporte + estado pendiente.
