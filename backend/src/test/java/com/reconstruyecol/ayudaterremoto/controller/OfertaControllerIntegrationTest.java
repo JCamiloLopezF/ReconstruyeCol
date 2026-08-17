@@ -1,9 +1,9 @@
-package com.reconstruyecol.ayudaterremoto.oferta;
+package com.reconstruyecol.ayudaterremoto.controller;
 
 import com.reconstruyecol.ayudaterremoto.common.TipoAyuda;
-import com.reconstruyecol.ayudaterremoto.oferta.dto.OfertaCrearRequest;
-import com.reconstruyecol.ayudaterremoto.oferta.dto.OfertaCrearResponse;
-import com.reconstruyecol.ayudaterremoto.oferta.dto.OfertaResponse;
+import com.reconstruyecol.ayudaterremoto.model.dto.OfertaCrearRequest;
+import com.reconstruyecol.ayudaterremoto.model.dto.OfertaCrearResponse;
+import com.reconstruyecol.ayudaterremoto.model.dto.OfertaResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

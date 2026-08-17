@@ -1,4 +1,4 @@
-package com.reconstruyecol.ayudaterremoto.oferta;
+package com.reconstruyecol.ayudaterremoto.model;
 
 import com.reconstruyecol.ayudaterremoto.common.EstadoPublicacion;
 import com.reconstruyecol.ayudaterremoto.common.TipoAyuda;
@@ -17,8 +17,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "ofertas")
-public class Oferta {
+@Table(name = "solicitudes")
+public class Solicitud {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -34,6 +34,12 @@ public class Oferta {
     @Column(nullable = false, columnDefinition = "geometry(Point,4326)")
     private Point ubicacion;
 
+    @Column(nullable = false)
+    private boolean urgente = false;
+
+    @Column(name = "solicitudes_agrupadas", nullable = false)
+    private int solicitudesAgrupadas = 1;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private EstadoPublicacion estado = EstadoPublicacion.ACTIVA;
@@ -47,22 +53,15 @@ public class Oferta {
     @Column(name = "token_gestion", nullable = false, unique = true, length = 64)
     private String tokenGestion = UUID.randomUUID().toString();
 
-    // Sin relacion JPA todavia: las entidades Ingeniero y Organizacion se crean en una tarea posterior.
-    @Column(name = "ingeniero_id")
-    private UUID ingenieroId;
-
-    @Column(name = "organizacion_id")
-    private UUID organizacionId;
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    protected Oferta() {
+    protected Solicitud() {
     }
 
-    public Oferta(TipoAyuda tipoAyuda, String descripcion, Point ubicacion,
-                   String contactoWhatsapp, String contactoEmail) {
+    public Solicitud(TipoAyuda tipoAyuda, String descripcion, Point ubicacion,
+                      String contactoWhatsapp, String contactoEmail) {
         this.tipoAyuda = tipoAyuda;
         this.descripcion = descripcion;
         this.ubicacion = ubicacion;
@@ -98,6 +97,22 @@ public class Oferta {
         this.ubicacion = ubicacion;
     }
 
+    public boolean isUrgente() {
+        return urgente;
+    }
+
+    public void setUrgente(boolean urgente) {
+        this.urgente = urgente;
+    }
+
+    public int getSolicitudesAgrupadas() {
+        return solicitudesAgrupadas;
+    }
+
+    public void setSolicitudesAgrupadas(int solicitudesAgrupadas) {
+        this.solicitudesAgrupadas = solicitudesAgrupadas;
+    }
+
     public EstadoPublicacion getEstado() {
         return estado;
     }
@@ -124,22 +139,6 @@ public class Oferta {
 
     public String getTokenGestion() {
         return tokenGestion;
-    }
-
-    public UUID getIngenieroId() {
-        return ingenieroId;
-    }
-
-    public void setIngenieroId(UUID ingenieroId) {
-        this.ingenieroId = ingenieroId;
-    }
-
-    public UUID getOrganizacionId() {
-        return organizacionId;
-    }
-
-    public void setOrganizacionId(UUID organizacionId) {
-        this.organizacionId = organizacionId;
     }
 
     public Instant getCreatedAt() {

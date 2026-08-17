@@ -1,11 +1,12 @@
-package com.reconstruyecol.ayudaterremoto.solicitud;
+package com.reconstruyecol.ayudaterremoto.service;
 
-import com.reconstruyecol.ayudaterremoto.common.GeoUtils;
 import com.reconstruyecol.ayudaterremoto.common.TipoAyuda;
-import com.reconstruyecol.ayudaterremoto.solicitud.dto.SolicitudCrearRequest;
-import com.reconstruyecol.ayudaterremoto.solicitud.dto.SolicitudCrearResponse;
-import com.reconstruyecol.ayudaterremoto.solicitud.dto.SolicitudResponse;
-import org.locationtech.jts.geom.Point;
+import com.reconstruyecol.ayudaterremoto.mapper.SolicitudMapper;
+import com.reconstruyecol.ayudaterremoto.model.Solicitud;
+import com.reconstruyecol.ayudaterremoto.model.dto.SolicitudCrearRequest;
+import com.reconstruyecol.ayudaterremoto.model.dto.SolicitudCrearResponse;
+import com.reconstruyecol.ayudaterremoto.model.dto.SolicitudResponse;
+import com.reconstruyecol.ayudaterremoto.repository.SolicitudRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,18 +34,11 @@ public class SolicitudService {
         List<Solicitud> cercanas = solicitudRepository.buscarCercanas(
                 request.getLat(), request.getLng(), RADIO_AGRUPACION_METROS, request.getTipoAyuda().name());
 
-        Point ubicacion = GeoUtils.crearPunto(request.getLat(), request.getLng());
-        Solicitud solicitud = new Solicitud(
-                request.getTipoAyuda(),
-                request.getDescripcion(),
-                ubicacion,
-                request.getContactoWhatsapp(),
-                request.getContactoEmail());
-
+        Solicitud solicitud = SolicitudMapper.toEntity(request);
         solicitud = solicitudRepository.save(solicitud);
         agruparYMarcarUrgenciaSiAplica(cercanas);
 
-        return new SolicitudCrearResponse(solicitud.getId(), solicitud.getTokenGestion());
+        return SolicitudMapper.toCrearResponse(solicitud);
     }
 
     /**
@@ -73,7 +67,7 @@ public class SolicitudService {
         String tipo = tipoAyuda != null ? tipoAyuda.name() : null;
         return solicitudRepository.buscarCercanas(lat, lng, radioMetros, tipo)
                 .stream()
-                .map(SolicitudService::toResponse)
+                .map(SolicitudMapper::toResponse)
                 .toList();
     }
 
@@ -84,19 +78,5 @@ public class SolicitudService {
             throw new IllegalArgumentException(
                     "Debe indicar al menos un medio de contacto: WhatsApp o correo");
         }
-    }
-
-    private static SolicitudResponse toResponse(Solicitud solicitud) {
-        return new SolicitudResponse(
-                solicitud.getId(),
-                solicitud.getTipoAyuda(),
-                solicitud.getDescripcion(),
-                solicitud.getUbicacion().getY(),
-                solicitud.getUbicacion().getX(),
-                solicitud.isUrgente(),
-                solicitud.getSolicitudesAgrupadas(),
-                solicitud.getContactoWhatsapp(),
-                solicitud.getContactoEmail(),
-                solicitud.getCreatedAt());
     }
 }

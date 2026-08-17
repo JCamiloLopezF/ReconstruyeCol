@@ -1,5 +1,6 @@
-package com.reconstruyecol.ayudaterremoto.solicitud;
+package com.reconstruyecol.ayudaterremoto.repository;
 
+import com.reconstruyecol.ayudaterremoto.model.Solicitud;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

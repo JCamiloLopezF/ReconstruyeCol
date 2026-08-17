@@ -1,9 +1,10 @@
-package com.reconstruyecol.ayudaterremoto.solicitud;
+package com.reconstruyecol.ayudaterremoto.controller;
 
 import com.reconstruyecol.ayudaterremoto.common.TipoAyuda;
-import com.reconstruyecol.ayudaterremoto.solicitud.dto.SolicitudCrearRequest;
-import com.reconstruyecol.ayudaterremoto.solicitud.dto.SolicitudCrearResponse;
-import com.reconstruyecol.ayudaterremoto.solicitud.dto.SolicitudResponse;
+import com.reconstruyecol.ayudaterremoto.model.dto.SolicitudCrearRequest;
+import com.reconstruyecol.ayudaterremoto.model.dto.SolicitudCrearResponse;
+import com.reconstruyecol.ayudaterremoto.model.dto.SolicitudResponse;
+import com.reconstruyecol.ayudaterremoto.service.SolicitudService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;

@@ -24,11 +24,12 @@ Verificados contra el `build.gradle` real (Gradle, Spring Boot 3.5.3, Java 21).
 
 ```
 com.<org>.ayudaterremoto
-├── solicitud/      (entidad, repositorio, servicio, controlador)
-├── oferta/
-├── organizacion/
-├── ingeniero/
-├── admin/
+├── model/          (entidades JPA)
+│   └── dto/        (request/response de entrada y salida)
+├── controller/     (endpoints REST)
+├── service/        (lógica de negocio)
+├── repository/     (acceso a datos, Spring Data JPA)
+├── mapper/         (conversión entidad <-> DTO)
 ├── security/       (configuración JWT, filtros)
 └── common/         (excepciones, utilidades, configuración PostGIS)
 ```

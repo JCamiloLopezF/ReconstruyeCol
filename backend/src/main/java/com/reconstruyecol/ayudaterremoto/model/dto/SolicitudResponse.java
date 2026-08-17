@@ -1,4 +1,4 @@
-package com.reconstruyecol.ayudaterremoto.solicitud.dto;
+package com.reconstruyecol.ayudaterremoto.model.dto;
 
 import com.reconstruyecol.ayudaterremoto.common.TipoAyuda;
 
