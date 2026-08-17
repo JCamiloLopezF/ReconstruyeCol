@@ -9,7 +9,7 @@ Contexto general del producto: `../CLAUDE.md`. Diseño técnico detallado: `../d
 - Java (confirmar versión LTS instalada con `java -version` antes de generar el proyecto — no asumir)
 - Spring Boot 3.x, Spring Web, Spring Data JPA, Spring Security
 - PostgreSQL + PostGIS (Hibernate Spatial para mapear `geometry(Point, 4326)`)
-- Build: Maven o Gradle — usar lo que el equipo ya conozca y ser consistente una vez elegido, no mezclar
+- Build: Gradle — usar lo que el equipo ya conozca y ser consistente una vez elegido, no mezclar
 
 ## Comandos
 
@@ -17,7 +17,8 @@ Verificados contra el `build.gradle` real (Gradle, Spring Boot 3.5.3, Java 21).
 
 - Build: `./gradlew clean build`
 - Compilar sin tests: `./gradlew clean compileJava`
-- Correr local: `./gradlew bootRun` (requiere `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` apuntando a un Postgres con PostGIS; por defecto usa `localhost:5432/ayudaterremoto`)
+- Base de datos local: `docker compose up -d` (PostGIS en `localhost:5433`, ver `docker-compose.yml`)
+- Correr local: `./gradlew bootRun` (requiere `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`; para la base de Docker: `jdbc:postgresql://localhost:5433/ayudaterremoto`, usuario `postgres`, password `admin`)
 - Tests: `./gradlew test`
 
 ## Estructura esperada de paquetes

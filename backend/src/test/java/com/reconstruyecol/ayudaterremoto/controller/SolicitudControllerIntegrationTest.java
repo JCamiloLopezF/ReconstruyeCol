@@ -4,6 +4,7 @@ import com.reconstruyecol.ayudaterremoto.common.TipoAyuda;
 import com.reconstruyecol.ayudaterremoto.model.dto.SolicitudCrearRequest;
 import com.reconstruyecol.ayudaterremoto.model.dto.SolicitudCrearResponse;
 import com.reconstruyecol.ayudaterremoto.model.dto.SolicitudResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,6 +12,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -48,6 +50,15 @@ class SolicitudControllerIntegrationTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @BeforeEach
+    void limpiarBase() {
+        jdbcTemplate.execute("DELETE FROM solicitudes");
+        jdbcTemplate.execute("DELETE FROM ofertas");
+    }
+
     private String urlBase() {
         return "http://localhost:" + port + "/api/solicitudes";
     }
@@ -59,7 +70,7 @@ class SolicitudControllerIntegrationTest {
         request.setDescripcion("Necesitamos agua potable para 5 familias");
         request.setLat(5.6947);
         request.setLng(-76.6584);
-        request.setContactoWhatsapp("+573001234567");
+        request.setContactoWhatsapp("573001234567");
 
         ResponseEntity<SolicitudCrearResponse> response =
                 restTemplate.postForEntity(urlBase(), request, SolicitudCrearResponse.class);

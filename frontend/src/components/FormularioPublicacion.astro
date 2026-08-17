@@ -46,7 +46,7 @@ const esSolicitud = tipo === "solicitud";
 
   <div class="campo">
     <label for="campo-whatsapp">WhatsApp (opcional)</label>
-    <input id="campo-whatsapp" name="contactoWhatsapp" type="tel" inputmode="tel" placeholder="Ej: 3001234567" />
+    <input id="campo-whatsapp" name="contactoWhatsapp" type="tel" inputmode="tel" maxlength="15" placeholder="Ej: 3001234567" />
   </div>
 
   <div class="campo">
@@ -270,6 +270,7 @@ const esSolicitud = tipo === "solicitud";
   const estadoUbicacion = document.getElementById("estado-ubicacion");
   const mensajeError = document.getElementById("mensaje-error");
   const botonEnviar = document.getElementById("boton-enviar") as HTMLButtonElement | null;
+  const campoWhatsapp = document.getElementById("campo-whatsapp") as HTMLInputElement | null;
   const pantallaExito = document.getElementById("pantalla-exito");
   const tokenValor = document.getElementById("exito-token-valor");
   const botonCopiar = document.getElementById("boton-copiar-token") as HTMLButtonElement | null;
@@ -329,6 +330,12 @@ const esSolicitud = tipo === "solicitud";
       }
     });
 
+    if (campoWhatsapp) {
+      campoWhatsapp.addEventListener("input", () => {
+        campoWhatsapp.value = campoWhatsapp.value.replace(/\D/g, "");
+      });
+    }
+
     formulario.addEventListener("submit", async (evento) => {
       evento.preventDefault();
       ocultarError();
@@ -354,6 +361,14 @@ const esSolicitud = tipo === "solicitud";
       }
       if (!contactoWhatsapp && !contactoEmail) {
         mostrarError("Deja al menos un WhatsApp o un correo de contacto.");
+        return;
+      }
+      if (contactoWhatsapp && (contactoWhatsapp.length < 7 || contactoWhatsapp.length > 15)) {
+        mostrarError("El WhatsApp debe contener solo números (7 a 15 dígitos).");
+        return;
+      }
+      if (contactoEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(contactoEmail)) {
+        mostrarError("El correo no es válido. Verifica que tenga el formato nombre@dominio.com.");
         return;
       }
       if (!consentimiento) {

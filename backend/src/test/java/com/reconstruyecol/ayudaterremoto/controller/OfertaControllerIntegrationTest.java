@@ -4,6 +4,7 @@ import com.reconstruyecol.ayudaterremoto.common.TipoAyuda;
 import com.reconstruyecol.ayudaterremoto.model.dto.OfertaCrearRequest;
 import com.reconstruyecol.ayudaterremoto.model.dto.OfertaCrearResponse;
 import com.reconstruyecol.ayudaterremoto.model.dto.OfertaResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,6 +12,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -46,6 +48,15 @@ class OfertaControllerIntegrationTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @BeforeEach
+    void limpiarBase() {
+        jdbcTemplate.execute("DELETE FROM solicitudes");
+        jdbcTemplate.execute("DELETE FROM ofertas");
+    }
+
     private String urlBase() {
         return "http://localhost:" + port + "/api/ofertas";
     }
@@ -57,7 +68,7 @@ class OfertaControllerIntegrationTest {
         request.setDescripcion("Camioneta disponible para traslados");
         request.setLat(5.6947);
         request.setLng(-76.6584);
-        request.setContactoWhatsapp("+573007654321");
+        request.setContactoWhatsapp("573007654321");
 
         ResponseEntity<OfertaCrearResponse> response =
                 restTemplate.postForEntity(urlBase(), request, OfertaCrearResponse.class);

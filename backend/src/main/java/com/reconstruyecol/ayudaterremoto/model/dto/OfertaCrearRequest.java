@@ -3,8 +3,10 @@ package com.reconstruyecol.ayudaterremoto.model.dto;
 import com.reconstruyecol.ayudaterremoto.common.TipoAyuda;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class OfertaCrearRequest {
@@ -26,8 +28,10 @@ public class OfertaCrearRequest {
     @DecimalMax(value = "180.0", message = "La longitud debe estar entre -180 y 180")
     private Double lng;
 
+    @Pattern(regexp = "\\d{7,15}", message = "El WhatsApp debe contener solo números (7 a 15 dígitos)")
     private String contactoWhatsapp;
 
+    @Email(message = "El correo no es válido. Verifica el formato nombre@dominio.com")
     private String contactoEmail;
 
     public TipoAyuda getTipoAyuda() {

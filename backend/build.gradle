@@ -8,6 +8,8 @@ group = 'com.reconstruyecol'
 version = '0.0.1-SNAPSHOT'
 description = 'Plataforma de ayuda humanitaria - terremoto Choco, agosto 2026'
 
+ext['testcontainers.version'] = '1.21.4'
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
