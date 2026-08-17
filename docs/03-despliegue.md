@@ -11,12 +11,16 @@ Basado en la sección 10 de `02-diseno-tecnico.md` (Vercel + Fly.io/Railway + Su
    ```sql
    create extension if not exists postgis;
    ```
-3. En el dashboard del proyecto, botón **"Connect"** (arriba, junto al nombre del proyecto) → pestaña de cadena de conexión → tipo **URI**, modo **Direct connection** (puerto `5432`, no el pooler `6543` — el backend corre como contenedor persistente, no funciones serverless, así que no necesita PgBouncer). Supabase muestra algo como `postgresql://postgres:[YOUR-PASSWORD]@db.<ref-proyecto>.supabase.co:5432/postgres`. De ahí solo se necesita el **host** (`db.<ref-proyecto>.supabase.co`); el usuario y el password van aparte, nunca dentro del `DB_URL` (ver punto 4).
-4. Armar `DB_URL` **sin usuario ni password adentro** — el driver JDBC de Postgres no soporta el formato `usuario:password@host` que usa la URI de Supabase; si se incluye ahí, Java intenta resolverlo como si fuera parte del hostname y falla con `UnknownHostException`. El usuario y password van en las variables separadas `DB_USERNAME` y `DB_PASSWORD` (que ya lee `application.yml`). Formato correcto, agregando `sslmode=require` (Supabase lo exige):
+3. En el dashboard del proyecto, botón **"Connect"** (arriba, junto al nombre del proyecto) → pestaña de cadena de conexión → tipo **URI**, modo **Session pooler** — **no "Direct connection"**. La conexión directa de Supabase (`db.<ref-proyecto>.supabase.co`) solo resuelve por IPv6, y Railway (igual que muchos otros hosts) no tiene salida IPv6, lo que produce `SocketException: Network unreachable`. El Session pooler (Supavisor) sí es IPv4, y a diferencia del Transaction pooler (puerto `6543`) soporta bien los prepared statements que usa Hibernate, por lo que es el correcto para un contenedor persistente como el nuestro. Supabase muestra algo como:
    ```
-   jdbc:postgresql://db.<ref-proyecto>.supabase.co:5432/postgres?sslmode=require
+   postgresql://postgres.<ref-proyecto>:[YOUR-PASSWORD]@aws-0-<region>.pooler.supabase.com:5432/postgres
    ```
-   Por ejemplo, si el host es `db.wjozjikadragiwjkvuts.supabase.co`, el `DB_URL` completo es `jdbc:postgresql://db.wjozjikadragiwjkvuts.supabase.co:5432/postgres?sslmode=require` — nada más.
+   Dos diferencias importantes frente a la conexión directa: el **host** cambia a `aws-0-<region>.pooler.supabase.com`, y el **usuario** ya no es `postgres` solo, sino `postgres.<ref-proyecto>` (con el punto y el ref del proyecto pegado — así el pooler sabe a cuál proyecto rutear la conexión).
+4. Armar `DB_URL` **sin usuario ni password adentro** — el driver JDBC de Postgres no soporta el formato `usuario:password@host` que usa la URI de Supabase; si se incluye ahí, Java intenta resolverlo como si fuera parte del hostname y falla con `UnknownHostException`. El usuario y password van en las variables separadas `DB_USERNAME` (con el formato `postgres.<ref-proyecto>` del pooler) y `DB_PASSWORD` (que ya lee `application.yml`). Formato correcto, agregando `sslmode=require` (Supabase lo exige):
+   ```
+   jdbc:postgresql://aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require
+   ```
+   Por ejemplo, si el pooler queda en `aws-0-us-east-1.pooler.supabase.com`, el `DB_URL` completo es `jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require` — nada más (usuario y password van aparte).
 5. Flyway (`spring.flyway.enabled: true`) corre las migraciones de `backend/src/main/resources/db/migration` automáticamente al arrancar — no hace falta correrlas a mano.
 
 ## 2. Backend en Railway (Trial, sin tarjeta)
@@ -33,8 +37,8 @@ No requiere CLI (aunque existe y es opcional). Todo se hace desde el dashboard:
    | Build → Builder | `Dockerfile` (Railway lo detecta solo al ver `backend/Dockerfile` una vez seteado el Root Directory; si no lo detecta, agregar la variable `RAILWAY_DOCKERFILE_PATH=Dockerfile`) |
    | Deploy → Healthcheck Path | `/actuator/health` |
 4. En **Variables**, agregar:
-   - `DB_URL` → `jdbc:postgresql://db.<ref-proyecto>.supabase.co:5432/postgres?sslmode=require` (ver sección 1)
-   - `DB_USERNAME` → `postgres`
+   - `DB_URL` → `jdbc:postgresql://aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require` (ver sección 1 — usar el Session pooler, no la conexión directa)
+   - `DB_USERNAME` → `postgres.<ref-proyecto>` (con el punto y el ref, formato del pooler)
    - `DB_PASSWORD` → la contraseña de Supabase
    - `DB_POOL_SIZE` → `5`
 5. **Deploy** → esperar el primer build (~3-5 min: build de Docker + arranque de Spring Boot + migraciones de Flyway).
@@ -69,8 +73,8 @@ No commitear `.vercel/` (ya debería quedar fuera vía `.gitignore` de Vercel) n
 
 | Variable | Dónde se usa | Ejemplo |
 |---|---|---|
-| `DB_URL` | Variable en Railway (backend) | `jdbc:postgresql://db.xxxx.supabase.co:5432/postgres?sslmode=require` |
-| `DB_USERNAME` | Variable en Railway (backend) | `postgres` |
+| `DB_URL` | Variable en Railway (backend) | `jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require` (Session pooler, no directa — ver sección 1) |
+| `DB_USERNAME` | Variable en Railway (backend) | `postgres.xxxx` (con el ref del proyecto, formato del pooler) |
 | `DB_PASSWORD` | Variable en Railway (backend) | — |
 | `DB_POOL_SIZE` | Variable en Railway (backend) | `5` (default seguro para el plan gratuito de Supabase) |
 | `PUBLIC_API_URL` | Build de Vercel (frontend) | `https://reconstruyecol-backend-production.up.railway.app` |
