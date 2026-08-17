@@ -11,11 +11,12 @@ Basado en la sección 10 de `02-diseno-tecnico.md` (Vercel + Fly.io/Railway + Su
    ```sql
    create extension if not exists postgis;
    ```
-3. En el dashboard del proyecto, botón **"Connect"** (arriba, junto al nombre del proyecto) → pestaña de cadena de conexión → tipo **URI**, modo **Direct connection** (puerto `5432`, no el pooler `6543` — el backend corre como contenedor persistente, no funciones serverless, así que no necesita PgBouncer). El password viene como placeholder `[YOUR-PASSWORD]`: reemplazarlo por el definido al crear el proyecto (o resetearlo desde Project Settings → Database si no se recuerda).
-4. Armar `DB_URL` agregando `sslmode=require` (Supabase lo exige):
+3. En el dashboard del proyecto, botón **"Connect"** (arriba, junto al nombre del proyecto) → pestaña de cadena de conexión → tipo **URI**, modo **Direct connection** (puerto `5432`, no el pooler `6543` — el backend corre como contenedor persistente, no funciones serverless, así que no necesita PgBouncer). Supabase muestra algo como `postgresql://postgres:[YOUR-PASSWORD]@db.<ref-proyecto>.supabase.co:5432/postgres`. De ahí solo se necesita el **host** (`db.<ref-proyecto>.supabase.co`); el usuario y el password van aparte, nunca dentro del `DB_URL` (ver punto 4).
+4. Armar `DB_URL` **sin usuario ni password adentro** — el driver JDBC de Postgres no soporta el formato `usuario:password@host` que usa la URI de Supabase; si se incluye ahí, Java intenta resolverlo como si fuera parte del hostname y falla con `UnknownHostException`. El usuario y password van en las variables separadas `DB_USERNAME` y `DB_PASSWORD` (que ya lee `application.yml`). Formato correcto, agregando `sslmode=require` (Supabase lo exige):
    ```
    jdbc:postgresql://db.<ref-proyecto>.supabase.co:5432/postgres?sslmode=require
    ```
+   Por ejemplo, si el host es `db.wjozjikadragiwjkvuts.supabase.co`, el `DB_URL` completo es `jdbc:postgresql://db.wjozjikadragiwjkvuts.supabase.co:5432/postgres?sslmode=require` — nada más.
 5. Flyway (`spring.flyway.enabled: true`) corre las migraciones de `backend/src/main/resources/db/migration` automáticamente al arrancar — no hace falta correrlas a mano.
 
 ## 2. Backend en Railway (Trial, sin tarjeta)
