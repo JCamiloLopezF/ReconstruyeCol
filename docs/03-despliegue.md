@@ -74,7 +74,7 @@ No commitear `.vercel/` (ya debería quedar fuera vía `.gitignore` de Vercel) n
 | `DB_URL` | Env var secreta en Render (backend) | `jdbc:postgresql://db.xxxx.supabase.co:5432/postgres?sslmode=require` |
 | `DB_USERNAME` | Env var secreta en Render (backend) | `postgres` |
 | `DB_PASSWORD` | Env var secreta en Render (backend) | — |
-| `DB_POOL_SIZE` | Env var en Render (backend) | `5` (ya viene seteado en `render.yaml`, seguro para el plan gratuito de Supabase) |
+| `DB_POOL_SIZE` | Env var en Render (backend) | `5` (default seguro para el plan gratuito de Supabase) |
 | `PUBLIC_API_URL` | Build de Vercel (frontend) | `https://reconstruyecol-backend.onrender.com` |
 | `PUBLIC_CONTACTO_ADMIN_EMAIL` | Build de Vercel (frontend) | `equipo@reconstruyecol.org` |
 
