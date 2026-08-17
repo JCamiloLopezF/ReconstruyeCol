@@ -1,6 +1,8 @@
 # 03 — Despliegue
 
-Basado en la sección 10 de `02-diseno-tecnico.md` (Vercel + Fly.io/Railway + Supabase), con un ajuste: **Fly.io eliminó su capa gratuita en 2024 y ahora exige tarjeta desde el registro**, así que el backend se despliega en **Render.com** (plan Free, sin tarjeta, soporta Docker directo). Stack final: **Vercel** (frontend), **Render.com** (backend, contenedor Docker) y **Supabase** (Postgres + PostGIS).
+Basado en la sección 10 de `02-diseno-tecnico.md` (Vercel + Fly.io/Railway + Supabase), con un ajuste: **Fly.io eliminó su capa gratuita en 2024 y Render también pide verificación de tarjeta** (política anti-abuso que se volvió estándar en la industria en 2026, incluso en planes "gratis"). El backend se despliega en **Railway**, usando el **Trial** de la cuenta nueva: $5 de crédito por 30 días, **sin pedir tarjeta** para crearlo. Stack final: **Vercel** (frontend), **Railway** (backend, contenedor Docker, plan Trial) y **Supabase** (Postgres + PostGIS).
+
+**Importante — esto es temporal, no una solución permanente:** el Trial de Railway dura 30 días o hasta agotar los $5 de crédito, lo que ocurra primero. Antes de esa fecha hay que decidir: agregar tarjeta en Railway (plan Hobby, $5/mes) o mover el backend a otro proveedor. Anotar la fecha de creación de la cuenta y poner un recordatorio.
 
 ## 1. Supabase (base de datos)
 
@@ -9,32 +11,45 @@ Basado en la sección 10 de `02-diseno-tecnico.md` (Vercel + Fly.io/Railway + Su
    ```sql
    create extension if not exists postgis;
    ```
-3. En el dashboard del proyecto, botón **"Connect"** (arriba, junto al nombre del proyecto) → pestaña de cadena de conexión → tipo **URI**, modo **Direct connection** (puerto `5432`, no el pooler `6543` — Render corre un contenedor persistente, no funciones serverless, así que no necesita PgBouncer). El password viene como placeholder `[YOUR-PASSWORD]`: reemplazarlo por el definido al crear el proyecto (o resetearlo desde Project Settings → Database si no se recuerda).
-4. Armar `DB_URL` agregando `sslmode=require` (Supabase lo exige):
+3. En el dashboard del proyecto, botón **"Connect"** (arriba, junto al nombre del proyecto) → pestaña de cadena de conexión → tipo **URI**, modo **Session pooler** — **no "Direct connection"**. La conexión directa de Supabase (`db.<ref-proyecto>.supabase.co`) solo resuelve por IPv6, y Railway (igual que muchos otros hosts) no tiene salida IPv6, lo que produce `SocketException: Network unreachable`. El Session pooler (Supavisor) sí es IPv4, y a diferencia del Transaction pooler (puerto `6543`) soporta bien los prepared statements que usa Hibernate, por lo que es el correcto para un contenedor persistente como el nuestro. Supabase muestra algo como:
    ```
-   jdbc:postgresql://db.<ref-proyecto>.supabase.co:5432/postgres?sslmode=require
+   postgresql://postgres.<ref-proyecto>:[YOUR-PASSWORD]@aws-0-<region>.pooler.supabase.com:5432/postgres
    ```
+   Dos diferencias importantes frente a la conexión directa: el **host** cambia a `aws-0-<region>.pooler.supabase.com`, y el **usuario** ya no es `postgres` solo, sino `postgres.<ref-proyecto>` (con el punto y el ref del proyecto pegado — así el pooler sabe a cuál proyecto rutear la conexión).
+4. Armar `DB_URL` **sin usuario ni password adentro** — el driver JDBC de Postgres no soporta el formato `usuario:password@host` que usa la URI de Supabase; si se incluye ahí, Java intenta resolverlo como si fuera parte del hostname y falla con `UnknownHostException`. El usuario y password van en las variables separadas `DB_USERNAME` (con el formato `postgres.<ref-proyecto>` del pooler) y `DB_PASSWORD` (que ya lee `application.yml`). Formato correcto, agregando `sslmode=require` (Supabase lo exige):
+   ```
+   jdbc:postgresql://aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require
+   ```
+   Por ejemplo, si el pooler queda en `aws-0-us-east-1.pooler.supabase.com`, el `DB_URL` completo es `jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require` — nada más (usuario y password van aparte).
 5. Flyway (`spring.flyway.enabled: true`) corre las migraciones de `backend/src/main/resources/db/migration` automáticamente al arrancar — no hace falta correrlas a mano.
 
-## 2. Backend en Render.com
+## 2. Backend en Railway (Trial, sin tarjeta)
 
-No requiere CLI ni tarjeta. Todo se hace desde el dashboard usando el Blueprint ya generado (`backend/render.yaml`):
+No requiere CLI (aunque existe y es opcional). Todo se hace desde el dashboard:
 
-1. Crear cuenta en [render.com](https://render.com) (login con GitHub es lo más rápido).
-2. Dashboard → **New +** → **Blueprint** → conectar el repo `ReconstruyeCol`.
-3. En **Blueprint Path**, escribir `backend/render.yaml` (el Blueprint no está en la raíz del repo porque es un monorepo).
-4. Render lee el archivo, detecta el servicio `reconstruyecol-backend` (Docker, plan Free, healthcheck en `/actuator/health`) y pide valores para las variables marcadas como secretas:
-   - `DB_URL` → `jdbc:postgresql://db.<ref-proyecto>.supabase.co:5432/postgres?sslmode=require` (ver sección 1)
-   - `DB_USERNAME` → `postgres`
+1. Crear cuenta en [railway.com](https://railway.com) (login con GitHub). No pide tarjeta — arranca automáticamente en el plan **Trial** con $5 de crédito.
+2. Dashboard → **New Project** → **Deploy from GitHub repo** → seleccionar `ReconstruyeCol` (autorizar la GitHub App de Railway si es la primera vez).
+3. Railway crea un servicio apuntando a la raíz del repo. Entrar a ese servicio → **Settings**:
+   | Campo | Valor |
+   |---|---|
+   | Source → Root Directory | `backend` |
+   | Source → Branch | `main` |
+   | Build → Builder | `Dockerfile` (Railway lo detecta solo al ver `backend/Dockerfile` una vez seteado el Root Directory; si no lo detecta, agregar la variable `RAILWAY_DOCKERFILE_PATH=Dockerfile`) |
+   | Deploy → Healthcheck Path | `/actuator/health` |
+4. En **Variables**, agregar:
+   - `DB_URL` → `jdbc:postgresql://aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require` (ver sección 1 — usar el Session pooler, no la conexión directa)
+   - `DB_USERNAME` → `postgres.<ref-proyecto>` (con el punto y el ref, formato del pooler)
    - `DB_PASSWORD` → la contraseña de Supabase
-5. Confirmar y esperar el primer build (~3-5 min: build de Docker + arranque de Spring Boot + migraciones de Flyway).
-6. La URL pública queda con forma `https://reconstruyecol-backend.onrender.com`.
+   - `DB_POOL_SIZE` → `5`
+5. **Deploy** → esperar el primer build (~3-5 min: build de Docker + arranque de Spring Boot + migraciones de Flyway).
+6. En **Settings → Networking**, generar un dominio público (**Generate Domain**) si no se creó solo. Queda con forma `https://reconstruyecol-backend-production.up.railway.app`.
+7. Verificar: `https://<tu-dominio>.up.railway.app/actuator/health` → debe responder `{"status":"UP"}`.
 
 Notas:
-- `PORT` no se configura a mano: Render lo inyecta automáticamente y `application.yml` ya lo lee (`server.port: ${PORT:8080}`).
-- El plan Free se duerme tras 15 minutos sin tráfico entrante (cold start en la siguiente petición) — mismo tipo de advertencia que ya menciona la sección 10 del diseño técnico para cualquier capa gratuita.
-- Región `virginia` (no hay región en Sudamérica en el plan Free); cambiar en `render.yaml` si se prefiere otra de las disponibles (`oregon`, `ohio`, `frankfurt`, `singapore`).
-- Cada push a `main` que toque `backend/**` dispara un redeploy automático una vez conectado el Blueprint (comportamiento por defecto de Render, no requiere workflow de GitHub Actions aparte).
+- `PORT` no se configura a mano: Railway lo inyecta automáticamente y `application.yml` ya lo lee (`server.port: ${PORT:8080}`).
+- A diferencia de Fly/Render, el plan Trial de Railway **no duerme el servicio** por inactividad — corre siempre mientras haya crédito, así que no hay cold start que mitigar por ahora.
+- Cada push a `main` que toque `backend/**` (por el Root Directory configurado) dispara un redeploy automático.
+- No se agregó ningún `railway.json`/`railway.toml` al repo: la configuración se hizo por dashboard para evitar arriesgar un schema incorrecto contra el plazo de 3 días. Si más adelante se quiere Infra-as-Code, se puede migrar a config-as-code sin tocar el Dockerfile.
 
 ## 3. Frontend en Vercel
 
@@ -49,7 +64,7 @@ Configurar una sola vez:
    | `VERCEL_TOKEN` | vercel.com → Account Settings → Tokens |
    | `VERCEL_ORG_ID` | `.vercel/project.json` tras el `vercel link` |
    | `VERCEL_PROJECT_ID` | `.vercel/project.json` tras el `vercel link` |
-   | `PUBLIC_API_URL` | URL pública del backend en Render (ej. `https://reconstruyecol-backend.onrender.com`) |
+   | `PUBLIC_API_URL` | URL pública del backend en Railway (ej. `https://reconstruyecol-backend-production.up.railway.app`) |
    | `PUBLIC_CONTACTO_ADMIN_EMAIL` | correo del equipo administrador |
 
 No commitear `.vercel/` (ya debería quedar fuera vía `.gitignore` de Vercel) ni los valores de estos secrets.
@@ -58,13 +73,14 @@ No commitear `.vercel/` (ya debería quedar fuera vía `.gitignore` de Vercel) n
 
 | Variable | Dónde se usa | Ejemplo |
 |---|---|---|
-| `DB_URL` | Env var secreta en Render (backend) | `jdbc:postgresql://db.xxxx.supabase.co:5432/postgres?sslmode=require` |
-| `DB_USERNAME` | Env var secreta en Render (backend) | `postgres` |
-| `DB_PASSWORD` | Env var secreta en Render (backend) | — |
-| `DB_POOL_SIZE` | Env var en Render (backend) | `5` (ya viene seteado en `render.yaml`, seguro para el plan gratuito de Supabase) |
-| `PUBLIC_API_URL` | Build de Vercel (frontend) | `https://reconstruyecol-backend.onrender.com` |
+| `DB_URL` | Variable en Railway (backend) | `jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require` (Session pooler, no directa — ver sección 1) |
+| `DB_USERNAME` | Variable en Railway (backend) | `postgres.xxxx` (con el ref del proyecto, formato del pooler) |
+| `DB_PASSWORD` | Variable en Railway (backend) | — |
+| `DB_POOL_SIZE` | Variable en Railway (backend) | `5` (default seguro para el plan gratuito de Supabase) |
+| `PUBLIC_API_URL` | Build de Vercel (frontend) | `https://reconstruyecol-backend-production.up.railway.app` |
 | `PUBLIC_CONTACTO_ADMIN_EMAIL` | Build de Vercel (frontend) | `equipo@reconstruyecol.org` |
 
 ## Pendiente (no incluido en esta tarea)
 
-- CI/CD explícito del backend: Render ya redeploya solo en cada push a `main` una vez conectado el Blueprint (no hace falta workflow de GitHub Actions aparte, a diferencia de Fly.io que sí lo hubiera necesitado).
+- CI/CD explícito del backend: Railway ya redeploya solo en cada push a `main` que toque `backend/**` una vez conectado el repo (no hace falta workflow de GitHub Actions aparte).
+- Decisión sobre qué hacer quedados los 30 días del Trial de Railway (ver advertencia al inicio de este documento) — pendiente de definir con el usuario antes de esa fecha.

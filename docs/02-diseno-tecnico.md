@@ -233,7 +233,7 @@ No hay chat interno. Al publicar, el usuario decide qué compartir:
 | Componente | Proveedor recomendado | Motivo |
 |---|---|---|
 | Frontend (Astro) | **Vercel** o **Netlify** | Despliegue automático desde GitHub, capa gratuita generosa, CDN global incluido |
-| Backend (Spring Boot, como contenedor Docker) | **Render.com** | Soporta contenedores Docker sin configuración compleja y no exige tarjeta para el plan Free. *(Actualizado: Fly.io, la opción original, eliminó su capa gratuita en 2024 y ahora pide tarjeta desde el registro — ver `03-despliegue.md`.)* |
+| Backend (Spring Boot, como contenedor Docker) | **Railway** (plan Trial) | Soporta contenedores Docker sin configuración compleja y no exige tarjeta para crear la cuenta. *(Actualizado: Fly.io y Render, las opciones evaluadas antes, ahora piden tarjeta/verificación desde el registro incluso en su capa gratuita — ver `03-despliegue.md`. El Trial de Railway da $5 de crédito por 30 días sin tarjeta; hay que revisar antes de esa fecha.)* |
 | Base de datos PostgreSQL + PostGIS | **Supabase** | Postgres gestionado gratuito con PostGIS habilitable con un clic; también sirve como almacenamiento de archivos (soportes de ingenieros) en el mismo proyecto |
 | Dominio | Subdominio gratuito del proveedor elegido, o dominio propio si ya tienen uno | Para lanzar en 3 días no es crítico tener dominio propio desde el día 1 |
 | CI/CD | GitHub Actions (incluido gratis en repos públicos/privados con límite generoso) | Despliegue automático al hacer push a `main` |
@@ -275,7 +275,7 @@ Pantallas mínimas del MVP:
 - Mapa con Leaflet mostrando pines de solicitudes/ofertas cercanas.
 - Formularios de publicación con geolocalización del navegador.
 - Lógica de agrupación/urgencia (sección 5), versión simple primero.
-- Despliegue a producción (Vercel + Render.com + Supabase) y pruebas manuales en móvil.
+- Despliegue a producción (Vercel + Railway + Supabase) y pruebas manuales en móvil.
 
 **Día 3 (lanzamiento oficial):**
 - Módulo de ingenieros: registro + subida de soporte + estado pendiente.
