@@ -1,0 +1,283 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Panel de administración — ReconstruyeCol">
+  <main>
+    <header class="encabezado">
+      <h1>Panel de administración</h1>
+      <button type="button" id="boton-salir" class="boton-texto">Cerrar sesión</button>
+    </header>
+
+    <section class="seccion">
+      <h2>🏗️ Ingenieros pendientes de verificación</h2>
+      <p id="ingenieros-vacio" class="mensaje-vacio" hidden>No hay ingenieros pendientes por ahora.</p>
+      <ul id="lista-ingenieros" class="lista"></ul>
+    </section>
+
+    <section class="seccion">
+      <h2>🚩 Publicaciones reportadas</h2>
+      <p id="reportes-vacio" class="mensaje-vacio" hidden>No hay reportes pendientes por ahora.</p>
+      <ul id="lista-reportes" class="lista"></ul>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  main {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    padding: 24px 20px 48px;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .encabezado {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .boton-texto {
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--co-rojo);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+    white-space: nowrap;
+  }
+
+  .seccion {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .mensaje-vacio {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  :global(.tarjeta) {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  :global(.tarjeta-titulo) {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  :global(.tarjeta-detalle) {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+
+  :global(.tarjeta-acciones) {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+
+  :global(.tarjeta-acciones a),
+  :global(.tarjeta-acciones button) {
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    min-height: 36px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  :global(.boton-aprobar) {
+    border-color: rgba(0, 56, 147, 0.3) !important;
+    color: var(--co-azul) !important;
+  }
+
+  :global(.boton-rechazar),
+  :global(.boton-eliminar) {
+    border-color: rgba(206, 17, 38, 0.3) !important;
+    color: var(--co-rojo) !important;
+  }
+
+  :global(.tarjeta-acciones button:disabled) {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+</style>
+
+<script>
+  import {
+    listarIngenierosPendientes,
+    actualizarEstadoIngeniero,
+    listarReportesAdmin,
+    eliminarPublicacionAdmin,
+    type IngenieroPendiente,
+    type ReporteAdmin,
+  } from "../../lib/api";
+  import { obtenerSesion, cerrarSesion } from "../../lib/auth";
+  import { etiquetaTipoAyuda } from "../../lib/tipos-ayuda";
+
+  function escaparHtml(texto: string): string {
+    const div = document.createElement("div");
+    div.textContent = texto;
+    return div.innerHTML;
+  }
+
+  const sesion = obtenerSesion();
+  if (!sesion || sesion.rol !== "ADMIN") {
+    window.location.href = "/ingenieros/login";
+  } else {
+    const token = sesion.token;
+
+    const listaIngenieros = document.getElementById("lista-ingenieros") as HTMLUListElement;
+    const ingenierosVacio = document.getElementById("ingenieros-vacio") as HTMLParagraphElement;
+    const listaReportes = document.getElementById("lista-reportes") as HTMLUListElement;
+    const reportesVacio = document.getElementById("reportes-vacio") as HTMLParagraphElement;
+
+    function pintarIngenieros(ingenieros: IngenieroPendiente[]): void {
+      listaIngenieros.innerHTML = "";
+      ingenierosVacio.hidden = ingenieros.length > 0;
+      ingenieros.forEach((ing) => {
+        const li = document.createElement("li");
+        li.className = "tarjeta";
+        li.dataset.id = ing.id;
+        li.innerHTML = `
+          <span class="tarjeta-titulo">${escaparHtml(ing.nombre)}</span>
+          <p class="tarjeta-detalle">${escaparHtml(ing.universidad)} — graduado el ${ing.fechaGraduacion}</p>
+          <p class="tarjeta-detalle">${escaparHtml(ing.email)}</p>
+          <div class="tarjeta-acciones">
+            <a href="${ing.urlSoporte}" target="_blank" rel="noopener">📄 Ver soporte</a>
+            <button type="button" class="boton-aprobar" data-accion="aprobar">✅ Aprobar</button>
+            <button type="button" class="boton-rechazar" data-accion="rechazar">❌ Rechazar</button>
+          </div>
+        `;
+        listaIngenieros.appendChild(li);
+      });
+    }
+
+    function pintarReportes(reportes: ReporteAdmin[]): void {
+      listaReportes.innerHTML = "";
+      reportesVacio.hidden = reportes.length > 0;
+      reportes.forEach((rep) => {
+        const li = document.createElement("li");
+        li.className = "tarjeta";
+        li.dataset.id = rep.entidadId;
+        li.dataset.tipo = rep.tipoEntidad;
+        const tipoEtiqueta = rep.tipoEntidad === "OFERTA" ? "Oferta" : "Solicitud";
+        const contenido = rep.descripcionPublicacion
+          ? `${tipoEtiqueta} de ${escaparHtml(etiquetaTipoAyuda(rep.tipoAyudaPublicacion ?? ""))}: "${escaparHtml(rep.descripcionPublicacion)}"`
+          : "Esta publicación ya no existe (probablemente eliminada por otro reporte).";
+        li.innerHTML = `
+          <span class="tarjeta-titulo">${contenido}</span>
+          <p class="tarjeta-detalle">Motivo del reporte: ${escaparHtml(rep.motivo)}</p>
+          <div class="tarjeta-acciones">
+            <button type="button" class="boton-eliminar" data-accion="eliminar">🗑️ Eliminar publicación</button>
+          </div>
+        `;
+        listaReportes.appendChild(li);
+      });
+    }
+
+    async function cargar(): Promise<void> {
+      try {
+        const [ingenieros, reportes] = await Promise.all([
+          listarIngenierosPendientes(token),
+          listarReportesAdmin(token),
+        ]);
+        pintarIngenieros(ingenieros);
+        pintarReportes(reportes);
+      } catch {
+        window.location.href = "/ingenieros/login";
+      }
+    }
+
+    listaIngenieros.addEventListener("click", async (evento) => {
+      const boton = (evento.target as HTMLElement).closest<HTMLButtonElement>("button[data-accion]");
+      if (!boton) return;
+      const li = boton.closest("li") as HTMLLIElement;
+      const id = li.dataset.id as string;
+      const estado = boton.dataset.accion === "aprobar" ? "VERIFICADO" : "RECHAZADO";
+
+      boton.disabled = true;
+      try {
+        await actualizarEstadoIngeniero(id, estado, token);
+        li.remove();
+        ingenierosVacio.hidden = listaIngenieros.children.length > 0;
+      } catch {
+        boton.disabled = false;
+      }
+    });
+
+    listaReportes.addEventListener("click", async (evento) => {
+      const boton = (evento.target as HTMLElement).closest<HTMLButtonElement>("button[data-accion]");
+      if (!boton) return;
+      const li = boton.closest("li") as HTMLLIElement;
+      const id = li.dataset.id as string;
+      const tipo = li.dataset.tipo === "OFERTA" ? "OFERTA" : "SOLICITUD";
+
+      if (!window.confirm("¿Eliminar esta publicación? Esta acción no se puede deshacer.")) return;
+
+      boton.disabled = true;
+      try {
+        await eliminarPublicacionAdmin(id, tipo, token);
+        li.remove();
+        reportesVacio.hidden = listaReportes.children.length > 0;
+      } catch {
+        boton.disabled = false;
+      }
+    });
+
+    document.getElementById("boton-salir")?.addEventListener("click", () => {
+      cerrarSesion();
+      window.location.href = "/";
+    });
+
+    cargar();
+  }
+</script>

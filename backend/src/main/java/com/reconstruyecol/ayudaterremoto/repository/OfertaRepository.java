@@ -25,4 +25,13 @@ public interface OfertaRepository extends JpaRepository<Oferta, UUID> {
                                  @Param("lng") double lng,
                                  @Param("radioMetros") double radioMetros,
                                  @Param("tipoAyuda") String tipoAyuda);
+
+    @Query(value = """
+            SELECT tipo_ayuda AS tipoAyuda,
+                   COUNT(*) FILTER (WHERE estado = 'ACTIVA')   AS activas,
+                   COUNT(*) FILTER (WHERE estado = 'ATENDIDA') AS atendidas
+            FROM ofertas
+            GROUP BY tipo_ayuda
+            """, nativeQuery = true)
+    List<ConteoTipoProjection> contarPorTipo();
 }

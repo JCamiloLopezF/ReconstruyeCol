@@ -52,3 +52,8 @@ app:
     # no la anon/publishable key.
     secret-key: ${SUPABASE_SECRET_KEY:}
     storage-bucket: ${SUPABASE_STORAGE_BUCKET:soportes-ingenieros}
+  admin:
+    # Solo se usan para crear el primer administrador si la tabla admins esta vacia (AdminSeeder).
+    # Defaults inseguros solo para desarrollo local. En produccion SIEMPRE sobreescribir ambas.
+    seed-email: ${ADMIN_SEED_EMAIL:admin@reconstruyecol.org}
+    seed-password: ${ADMIN_SEED_PASSWORD:cambiar-esta-password-admin-0123456789}

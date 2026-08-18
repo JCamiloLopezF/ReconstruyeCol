@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -17,8 +18,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 // Solo dos roles requieren login (seccion 6): ROLE_INGENIERO y ROLE_ADMIN via JWT (sin sesiones).
-// Todo lo demas queda publico; /api/admin/** aun no tiene endpoints pero la regla ya queda lista.
+// Todo lo demas queda publico. @EnableMethodSecurity habilita @PreAuthorize en los controllers
+// de /api/admin/** (regla de backend/CLAUDE.md), ademas de la restriccion por URL de abajo.
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;

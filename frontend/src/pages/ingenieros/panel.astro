@@ -103,12 +103,12 @@ import Layout from "../../layouts/Layout.astro";
   import { obtenerSesion, cerrarSesion, etiquetaEstadoVerificacion } from "../../lib/auth";
 
   const sesion = obtenerSesion();
-  if (!sesion) {
-    window.location.href = "/ingenieros/login";
+  if (!sesion || sesion.rol !== "INGENIERO") {
+    window.location.href = sesion?.rol === "ADMIN" ? "/admin" : "/ingenieros/login";
   } else {
     const badge = document.getElementById("estado-badge");
     const mensajePendiente = document.getElementById("mensaje-pendiente");
-    if (badge) {
+    if (badge && sesion.estadoVerificacion) {
       badge.textContent = etiquetaEstadoVerificacion(sesion.estadoVerificacion);
     }
     if (mensajePendiente && sesion.estadoVerificacion === "PENDIENTE") {

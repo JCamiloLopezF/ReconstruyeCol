@@ -43,6 +43,7 @@ import Layout from "../layouts/Layout.astro";
         Nadie en esta plataforma maneja tu dinero. El contacto se hace
         directamente por WhatsApp o correo, solo si tú decides compartirlo.
       </p>
+      <p><a href="/estadisticas">Ver estadísticas públicas →</a></p>
     </footer>
   </main>
 </Layout>
@@ -178,6 +179,9 @@ import Layout from "../layouts/Layout.astro";
 
   .footer {
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 
   .footer p {
@@ -185,6 +189,12 @@ import Layout from "../layouts/Layout.astro";
     font-size: 13px;
     line-height: 1.5;
     color: var(--text-secondary);
+  }
+
+  .footer a {
+    color: var(--co-azul);
+    font-weight: 600;
+    text-decoration: none;
   }
 
   @media (min-width: 640px) {

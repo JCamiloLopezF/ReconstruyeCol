@@ -8,7 +8,7 @@ import Layout from "../../layouts/Layout.astro";
     <header class="encabezado">
       <span class="icon" aria-hidden="true">🔑</span>
       <h1>Inicia sesión</h1>
-      <p>Solo para ingenieros estructurales registrados.</p>
+      <p>Para ingenieros estructurales registrados y administradores.</p>
     </header>
 
     <form id="formulario-login" class="formulario" novalidate>
@@ -183,9 +183,10 @@ import Layout from "../../layouts/Layout.astro";
         const respuesta = await login({ email, password });
         guardarSesion({
           token: respuesta.token,
-          estadoVerificacion: respuesta.estadoVerificacion ?? "PENDIENTE",
+          rol: respuesta.rol === "ADMIN" ? "ADMIN" : "INGENIERO",
+          estadoVerificacion: respuesta.estadoVerificacion,
         });
-        window.location.href = "/ingenieros/panel";
+        window.location.href = respuesta.rol === "ADMIN" ? "/admin" : "/ingenieros/panel";
       } catch (error) {
         const mensaje = error instanceof ApiError ? error.message : "No se pudo iniciar sesión. Intenta de nuevo.";
         mostrarError(mensaje);

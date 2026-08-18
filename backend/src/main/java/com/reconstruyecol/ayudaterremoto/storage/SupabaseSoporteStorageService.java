@@ -8,6 +8,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Sube los soportes de ingenieros al bucket privado de Supabase Storage (mismo proyecto que la base
@@ -21,12 +22,14 @@ import java.io.IOException;
 public class SupabaseSoporteStorageService implements SoporteStorageService {
 
     private final RestClient restClient;
+    private final String supabaseUrl;
     private final String bucket;
 
     public SupabaseSoporteStorageService(
             @Value("${app.supabase.url:}") String supabaseUrl,
             @Value("${app.supabase.secret-key:}") String secretKey,
             @Value("${app.supabase.storage-bucket:soportes-ingenieros}") String bucket) {
+        this.supabaseUrl = supabaseUrl;
         this.bucket = bucket;
         this.restClient = RestClient.builder()
                 .baseUrl(supabaseUrl + "/storage/v1")
@@ -59,5 +62,33 @@ public class SupabaseSoporteStorageService implements SoporteStorageService {
         }
 
         return bucket + "/" + rutaDestino;
+    }
+
+    @Override
+    public String generarUrlFirmada(String rutaAlmacenada, long expiracionSegundos) {
+        String prefijoBucket = bucket + "/";
+        String ruta = rutaAlmacenada.startsWith(prefijoBucket)
+                ? rutaAlmacenada.substring(prefijoBucket.length())
+                : rutaAlmacenada;
+
+        Map<String, Object> respuesta;
+        try {
+            respuesta = restClient.post()
+                    .uri("/object/sign/{bucket}/{ruta}", bucket, ruta)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("expiresIn", expiracionSegundos))
+                    .retrieve()
+                    .body(Map.class);
+        } catch (RestClientException e) {
+            throw new AlmacenamientoException("No se pudo generar el enlace del soporte", e);
+        }
+
+        Object signedUrl = respuesta != null ? respuesta.get("signedURL") : null;
+        if (signedUrl == null) {
+            throw new AlmacenamientoException("Supabase no devolvió un enlace firmado", null);
+        }
+
+        String url = signedUrl.toString();
+        return url.startsWith("http") ? url : supabaseUrl + "/storage/v1" + url;
     }
 }

@@ -1,21 +1,23 @@
 export type EstadoVerificacion = "PENDIENTE" | "VERIFICADO" | "RECHAZADO";
+export type Rol = "INGENIERO" | "ADMIN";
 
-export interface SesionIngeniero {
+export interface Sesion {
   token: string;
-  estadoVerificacion: EstadoVerificacion;
+  rol: Rol;
+  estadoVerificacion: EstadoVerificacion | null;
 }
 
-const CLAVE_STORAGE = "reconstruyecol_ingeniero_sesion";
+const CLAVE_STORAGE = "reconstruyecol_sesion";
 
-export function guardarSesion(sesion: SesionIngeniero): void {
+export function guardarSesion(sesion: Sesion): void {
   localStorage.setItem(CLAVE_STORAGE, JSON.stringify(sesion));
 }
 
-export function obtenerSesion(): SesionIngeniero | null {
+export function obtenerSesion(): Sesion | null {
   const crudo = localStorage.getItem(CLAVE_STORAGE);
   if (!crudo) return null;
   try {
-    return JSON.parse(crudo) as SesionIngeniero;
+    return JSON.parse(crudo) as Sesion;
   } catch {
     return null;
   }

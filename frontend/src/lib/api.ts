@@ -67,6 +67,15 @@ async function manejarRespuesta<T>(res: Response): Promise<T> {
   throw new ApiError(await extraerMensajeError(res));
 }
 
+async function manejarRespuestaVacia(res: Response): Promise<void> {
+  if (res.ok) return;
+  throw new ApiError(await extraerMensajeError(res));
+}
+
+function encabezadosAuth(token: string): HeadersInit {
+  return { Authorization: `Bearer ${token}` };
+}
+
 function construirQueryString(params: BusquedaCercaniaParams): string {
   const query = new URLSearchParams({
     lat: String(params.lat),
@@ -158,4 +167,93 @@ export function login(payload: LoginPayload): Promise<LoginResponse> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   }).then((res) => manejarRespuesta<LoginResponse>(res));
+}
+
+export type TipoEntidadReportada = "SOLICITUD" | "OFERTA";
+
+export interface ReporteCrearPayload {
+  entidadId: string;
+  tipoEntidad: TipoEntidadReportada;
+  motivo: string;
+}
+
+export function crearReporte(payload: ReporteCrearPayload): Promise<void> {
+  return fetch(`${API_URL}/api/reportes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  }).then((res) => manejarRespuestaVacia(res));
+}
+
+export interface IngenieroPendiente {
+  id: string;
+  nombre: string;
+  email: string;
+  universidad: string;
+  fechaGraduacion: string;
+  urlSoporte: string;
+  estadoVerificacion: "PENDIENTE" | "VERIFICADO" | "RECHAZADO";
+  createdAt: string;
+}
+
+export function listarIngenierosPendientes(token: string): Promise<IngenieroPendiente[]> {
+  return fetch(`${API_URL}/api/admin/ingenieros/pendientes`, {
+    headers: encabezadosAuth(token),
+  }).then((res) => manejarRespuesta<IngenieroPendiente[]>(res));
+}
+
+export function actualizarEstadoIngeniero(
+  id: string,
+  estado: "VERIFICADO" | "RECHAZADO",
+  token: string,
+): Promise<void> {
+  return fetch(`${API_URL}/api/admin/ingenieros/${id}/estado`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...encabezadosAuth(token) },
+    body: JSON.stringify({ estado }),
+  }).then((res) => manejarRespuestaVacia(res));
+}
+
+export interface ReporteAdmin {
+  id: string;
+  entidadId: string;
+  tipoEntidad: TipoEntidadReportada;
+  motivo: string;
+  createdAt: string;
+  descripcionPublicacion: string | null;
+  tipoAyudaPublicacion: TipoAyuda | null;
+}
+
+export function listarReportesAdmin(token: string): Promise<ReporteAdmin[]> {
+  return fetch(`${API_URL}/api/admin/reportes`, {
+    headers: encabezadosAuth(token),
+  }).then((res) => manejarRespuesta<ReporteAdmin[]>(res));
+}
+
+export function eliminarPublicacionAdmin(
+  id: string,
+  tipo: TipoEntidadReportada,
+  token: string,
+): Promise<void> {
+  return fetch(`${API_URL}/api/admin/publicaciones/${id}?tipo=${tipo}`, {
+    method: "DELETE",
+    headers: encabezadosAuth(token),
+  }).then((res) => manejarRespuestaVacia(res));
+}
+
+export interface ConteoPorTipo {
+  tipoAyuda: TipoAyuda;
+  activas: number;
+  atendidas: number;
+}
+
+export interface EstadisticasPublicas {
+  solicitudes: ConteoPorTipo[];
+  ofertas: ConteoPorTipo[];
+}
+
+export function obtenerEstadisticasPublicas(): Promise<EstadisticasPublicas> {
+  return fetch(`${API_URL}/api/estadisticas/publicas`).then((res) =>
+    manejarRespuesta<EstadisticasPublicas>(res),
+  );
 }

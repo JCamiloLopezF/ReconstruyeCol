@@ -46,6 +46,7 @@ No requiere CLI (aunque existe y es opcional). Todo se hace desde el dashboard:
    - `SUPABASE_URL` → `https://<ref-proyecto>.supabase.co` (URL del **proyecto/API**, ojo que es distinta al host de la base de datos `db.<ref-proyecto>.supabase.co` o al del pooler — se ve en el botón **"Connect"** del dashboard, o en Integrations → Data API)
    - `SUPABASE_SECRET_KEY` → en **Settings → API Keys**, la **Secret key** (formato `sb_secret_...`), no la `Publishable key` — necesaria para subir archivos a un bucket privado desde el backend. *(Supabase migró de `anon`/`service_role` a `Publishable`/`Secret` — si tu proyecto es nuevo solo vas a ver estas dos opciones.)*
    - `SUPABASE_STORAGE_BUCKET` → opcional, default `soportes-ingenieros` si no se setea
+   - `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` → credenciales del primer administrador. `AdminSeeder` crea esa cuenta solo la primera vez que arranca el backend (si la tabla `admins` está vacía) — si no se setean, queda el default inseguro del código, así que **hay que sobreescribir ambas en producción**. Ese es el login con el que se entra al panel de administración (`/ingenieros/login` en el frontend, redirige a `/admin` si el rol es admin).
 5. **Deploy** → esperar el primer build (~3-5 min: build de Docker + arranque de Spring Boot + migraciones de Flyway).
 6. En **Settings → Networking**, generar un dominio público (**Generate Domain**) si no se creó solo. Queda con forma `https://reconstruyecol-backend-production.up.railway.app`.
 7. Verificar: `https://<tu-dominio>.up.railway.app/actuator/health` → debe responder `{"status":"UP"}`.
@@ -86,6 +87,8 @@ No commitear `.vercel/` (ya debería quedar fuera vía `.gitignore` de Vercel) n
 | `SUPABASE_URL` | Variable en Railway (backend) | `https://xxxx.supabase.co` (URL del proyecto/API, no la de la base de datos) |
 | `SUPABASE_SECRET_KEY` | Variable en Railway (backend) | la `Secret key` (`sb_secret_...`) de Settings → API Keys |
 | `SUPABASE_STORAGE_BUCKET` | Variable en Railway (backend, opcional) | `soportes-ingenieros` (default si no se setea) |
+| `ADMIN_SEED_EMAIL` | Variable en Railway (backend) | correo del primer administrador (se crea solo una vez, al primer arranque) |
+| `ADMIN_SEED_PASSWORD` | Variable en Railway (backend) | password del primer administrador — **sobreescribir siempre en producción** |
 | `PUBLIC_API_URL` | Build de Vercel (frontend) | `https://reconstruyecol-backend-production.up.railway.app` |
 | `PUBLIC_CONTACTO_ADMIN_EMAIL` | Build de Vercel (frontend) | `equipo@reconstruyecol.org` |
 

@@ -1,8 +1,10 @@
 package com.reconstruyecol.ayudaterremoto.service;
 
+import com.reconstruyecol.ayudaterremoto.common.EstadoVerificacion;
 import com.reconstruyecol.ayudaterremoto.common.HashUtils;
 import com.reconstruyecol.ayudaterremoto.mapper.IngenieroMapper;
 import com.reconstruyecol.ayudaterremoto.model.Ingeniero;
+import com.reconstruyecol.ayudaterremoto.model.dto.IngenieroPendienteResponse;
 import com.reconstruyecol.ayudaterremoto.model.dto.IngenieroRegistroRequest;
 import com.reconstruyecol.ayudaterremoto.model.dto.IngenieroRegistroResponse;
 import com.reconstruyecol.ayudaterremoto.repository.IngenieroRepository;
@@ -11,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -55,5 +58,25 @@ public class IngenieroService {
             return "soporte";
         }
         return nombreOriginal.replaceAll("[^a-zA-Z0-9._-]", "_");
+    }
+
+    /** Genera un enlace firmado de 1 hora por cada soporte — así el admin nunca ve un link caducado. */
+    @Transactional(readOnly = true)
+    public List<IngenieroPendienteResponse> listarPendientes() {
+        return ingenieroRepository.findByEstadoVerificacion(EstadoVerificacion.PENDIENTE).stream()
+                .map(ingeniero -> IngenieroMapper.toPendienteResponse(
+                        ingeniero, soporteStorageService.generarUrlFirmada(ingeniero.getUrlSoporte(), 3600)))
+                .toList();
+    }
+
+    @Transactional
+    public void actualizarEstado(UUID id, EstadoVerificacion nuevoEstado) {
+        if (nuevoEstado == EstadoVerificacion.PENDIENTE) {
+            throw new IllegalArgumentException("El estado debe ser VERIFICADO o RECHAZADO");
+        }
+        Ingeniero ingeniero = ingenieroRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Ingeniero no encontrado"));
+        ingeniero.setEstadoVerificacion(nuevoEstado);
+        ingenieroRepository.save(ingeniero);
     }
 }

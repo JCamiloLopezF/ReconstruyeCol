@@ -1,0 +1,240 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout
+  title="Estadísticas — ReconstruyeCol"
+  description="Conteo público de solicitudes y ofertas de ayuda por tipo, para reportes de transparencia."
+>
+  <main>
+    <a class="back" href="/">← Volver</a>
+    <header class="encabezado">
+      <span class="icon" aria-hidden="true">📊</span>
+      <h1>Estadísticas públicas</h1>
+      <p>
+        Conteo agregado de solicitudes y ofertas por tipo de ayuda, sin datos personales.
+        Se actualiza en tiempo real.
+      </p>
+    </header>
+
+    <p id="mensaje-error" class="mensaje-error" role="alert" hidden></p>
+    <p id="mensaje-cargando" class="mensaje-vacio">Cargando estadísticas...</p>
+
+    <section id="seccion-solicitudes" class="seccion" hidden>
+      <h2>Solicitudes de ayuda</h2>
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Activas</th>
+            <th>Atendidas</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-solicitudes"></tbody>
+      </table>
+    </section>
+
+    <section id="seccion-ofertas" class="seccion" hidden>
+      <h2>Ofertas de ayuda</h2>
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Activas</th>
+            <th>Atendidas</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-ofertas"></tbody>
+      </table>
+    </section>
+
+    <button type="button" id="boton-csv" class="boton-secundario" hidden>⬇️ Exportar a CSV</button>
+  </main>
+</Layout>
+
+<style>
+  main {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px 20px 48px;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .back {
+    align-self: flex-start;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--co-azul);
+    text-decoration: none;
+  }
+
+  .encabezado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .icon {
+    font-size: 36px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .encabezado p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    max-width: 44ch;
+  }
+
+  .mensaje-vacio {
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .mensaje-error {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    background: rgba(206, 17, 38, 0.08);
+    border: 1px solid rgba(206, 17, 38, 0.3);
+    color: var(--co-rojo);
+    font-size: 14px;
+  }
+
+  .seccion {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .tabla {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    font-size: 14px;
+  }
+
+  .tabla th,
+  .tabla td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tabla th {
+    background: var(--bg);
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .tabla tr:last-child td {
+    border-bottom: none;
+  }
+
+  .boton-secundario {
+    align-self: center;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 12px 20px;
+    min-height: 44px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--co-azul);
+    background: var(--surface);
+    color: var(--co-azul);
+    cursor: pointer;
+  }
+</style>
+
+<script>
+  import { obtenerEstadisticasPublicas, ApiError, type ConteoPorTipo } from "../lib/api";
+  import { etiquetaTipoAyuda } from "../lib/tipos-ayuda";
+
+  const mensajeError = document.getElementById("mensaje-error") as HTMLParagraphElement;
+  const mensajeCargando = document.getElementById("mensaje-cargando") as HTMLParagraphElement;
+  const seccionSolicitudes = document.getElementById("seccion-solicitudes") as HTMLElement;
+  const seccionOfertas = document.getElementById("seccion-ofertas") as HTMLElement;
+  const tablaSolicitudes = document.getElementById("tabla-solicitudes") as HTMLTableSectionElement;
+  const tablaOfertas = document.getElementById("tabla-ofertas") as HTMLTableSectionElement;
+  const botonCsv = document.getElementById("boton-csv") as HTMLButtonElement;
+
+  let ultimasSolicitudes: ConteoPorTipo[] = [];
+  let ultimasOfertas: ConteoPorTipo[] = [];
+
+  function pintarFilas(cuerpo: HTMLTableSectionElement, conteos: ConteoPorTipo[]): void {
+    cuerpo.innerHTML = conteos
+      .map(
+        (c) => `
+          <tr>
+            <td>${etiquetaTipoAyuda(c.tipoAyuda)}</td>
+            <td>${c.activas}</td>
+            <td>${c.atendidas}</td>
+          </tr>
+        `,
+      )
+      .join("");
+  }
+
+  function generarCsv(): string {
+    const filas = ["categoria,tipo,activas,atendidas"];
+    ultimasSolicitudes.forEach((c) => filas.push(`solicitud,${c.tipoAyuda},${c.activas},${c.atendidas}`));
+    ultimasOfertas.forEach((c) => filas.push(`oferta,${c.tipoAyuda},${c.activas},${c.atendidas}`));
+    return filas.join("\n");
+  }
+
+  botonCsv.addEventListener("click", () => {
+    const blob = new Blob([generarCsv()], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement("a");
+    enlace.href = url;
+    enlace.download = `reconstruyecol-estadisticas-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(enlace);
+    enlace.click();
+    enlace.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  obtenerEstadisticasPublicas()
+    .then((datos) => {
+      ultimasSolicitudes = datos.solicitudes;
+      ultimasOfertas = datos.ofertas;
+      pintarFilas(tablaSolicitudes, datos.solicitudes);
+      pintarFilas(tablaOfertas, datos.ofertas);
+      mensajeCargando.hidden = true;
+      seccionSolicitudes.hidden = false;
+      seccionOfertas.hidden = false;
+      botonCsv.hidden = false;
+    })
+    .catch((error) => {
+      mensajeCargando.hidden = true;
+      mensajeError.hidden = false;
+      mensajeError.textContent =
+        error instanceof ApiError ? error.message : "No se pudieron cargar las estadísticas.";
+    });
+</script>
