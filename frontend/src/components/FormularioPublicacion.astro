@@ -10,51 +10,57 @@ const esSolicitud = tipo === "solicitud";
 ---
 
 <form id="formulario-publicacion" class="formulario" data-tipo={tipo} novalidate>
-  <div class="campo">
-    <label for="campo-tipo">Tipo de ayuda</label>
-    <select id="campo-tipo" name="tipoAyuda" required>
-      <option value="" selected disabled>Selecciona una opción</option>
-      {TIPOS_AYUDA.map((t) => <option value={t.value}>{t.label}</option>)}
-    </select>
+  <!-- Grupo 1 (Proximidad): qué tipo de ayuda y en qué consiste, son una sola decisión -->
+  <div class="grupo">
+    <div class="campo">
+      <label for="campo-tipo">Tipo de ayuda</label>
+      <select id="campo-tipo" name="tipoAyuda" required>
+        <option value="" selected disabled>Selecciona una opción</option>
+        {TIPOS_AYUDA.map((t) => <option value={t.value}>{t.label}</option>)}
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="campo-descripcion">
+        {esSolicitud ? "¿Qué necesitas?" : "¿Qué puedes ofrecer?"}
+      </label>
+      <textarea
+        id="campo-descripcion"
+        name="descripcion"
+        required
+        maxlength="500"
+        rows="3"
+        placeholder={esSolicitud
+          ? "Ej: Agua potable para 4 personas, hay un adulto mayor"
+          : "Ej: Tengo una camioneta y puedo transportar donaciones"}
+      ></textarea>
+    </div>
   </div>
 
-  <div class="campo">
-    <label for="campo-descripcion">
-      {esSolicitud ? "¿Qué necesitas?" : "¿Qué puedes ofrecer?"}
-    </label>
-    <textarea
-      id="campo-descripcion"
-      name="descripcion"
-      required
-      maxlength="500"
-      rows="3"
-      placeholder={esSolicitud
-        ? "Ej: Agua potable para 4 personas, hay un adulto mayor"
-        : "Ej: Tengo una camioneta y puedo transportar donaciones"}
-    ></textarea>
-  </div>
-
-  <div class="campo">
-    <span class="campo-label" id="etiqueta-ubicacion">Tu ubicación</span>
+  <!-- Grupo 2 (Cierre): unico paso que es una accion, no texto — lleva contenedor propio -->
+  <div class="grupo grupo-ubicacion">
+    <span class="grupo-titulo" id="etiqueta-ubicacion">Tu ubicación</span>
     <button type="button" id="boton-ubicacion" class="boton-secundario" aria-describedby="estado-ubicacion">
       📍 Usar mi ubicación actual
     </button>
-    <p id="estado-ubicacion" class="estado-ubicacion" role="status">
+    <p id="estado-ubicacion" class="texto-ayuda" role="status">
       Necesitamos tu ubicación aproximada para que puedan encontrarte cerca.
     </p>
   </div>
 
-  <div class="campo">
-    <label for="campo-whatsapp">WhatsApp (opcional)</label>
-    <input id="campo-whatsapp" name="contactoWhatsapp" type="tel" inputmode="tel" maxlength="15" placeholder="Ej: 3001234567" />
+  <!-- Grupo 3 (Proximidad): los dos medios de contacto son una sola decision -->
+  <div class="grupo">
+    <span class="grupo-titulo">Cómo te pueden contactar</span>
+    <div class="campo">
+      <label for="campo-whatsapp">WhatsApp (opcional)</label>
+      <input id="campo-whatsapp" name="contactoWhatsapp" type="tel" inputmode="tel" maxlength="15" placeholder="Ej: 3001234567" />
+    </div>
+    <div class="campo">
+      <label for="campo-email">Correo (opcional)</label>
+      <input id="campo-email" name="contactoEmail" type="email" placeholder="tucorreo@ejemplo.com" />
+    </div>
+    <p class="texto-ayuda">Debes dejar al menos un WhatsApp o un correo para que puedan contactarte.</p>
   </div>
-
-  <div class="campo">
-    <label for="campo-email">Correo (opcional)</label>
-    <input id="campo-email" name="contactoEmail" type="email" placeholder="tucorreo@ejemplo.com" />
-  </div>
-
-  <p class="ayuda-contacto">Debes dejar al menos un WhatsApp o un correo para que puedan contactarte.</p>
 
   <div class="campo campo-checkbox">
     <input id="campo-consentimiento" name="consentimiento" type="checkbox" required />
@@ -66,14 +72,18 @@ const esSolicitud = tipo === "solicitud";
 
   <p id="mensaje-error" class="mensaje-error" role="alert" hidden></p>
 
-  <button type="submit" id="boton-enviar" class="boton-primario">
+  <button
+    type="submit"
+    id="boton-enviar"
+    class={`boton-primario ${esSolicitud ? "boton-primario--urgente" : "boton-primario--accion"}`}
+  >
     {esSolicitud ? "Publicar solicitud" : "Publicar oferta"}
   </button>
 </form>
 
 <div id="pantalla-exito" class="pantalla-exito" hidden>
   <span class="exito-icono" aria-hidden="true">✅</span>
-  <h2>{esSolicitud ? "¡Tu solicitud fue publicada!" : "¡Tu oferta fue publicada!"}</h2>
+  <h2>{esSolicitud ? "Tu solicitud fue publicada" : "Tu oferta fue publicada"}</h2>
   <p>
     Guarda este código: es la única forma de marcar tu publicación como atendida más adelante,
     ya que no necesitas cuenta ni contraseña.
@@ -87,20 +97,44 @@ const esSolicitud = tipo === "solicitud";
 </div>
 
 <style>
+  /* Separación holgada ENTRE grupos (Proximidad) */
   .formulario {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: var(--space-6);
+  }
+
+  /* Separación cerrada DENTRO de un grupo — es lo que crea el agrupamiento */
+  .grupo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .grupo-titulo {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  /* Único paso "de acción" del formulario: contenedor propio (Ley de cierre +
+     Figura/fondo) para que se distinga de los campos de solo escritura. */
+  .grupo-ubicacion {
+    padding: var(--space-4);
+    background: var(--surface-sunken);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
   }
 
   .campo {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-2);
   }
 
-  label,
-  .campo-label {
+  label {
     font-size: 14px;
     font-weight: 600;
     color: var(--text);
@@ -112,8 +146,8 @@ const esSolicitud = tipo === "solicitud";
   input[type="email"] {
     font: inherit;
     font-size: 16px;
-    padding: 12px 14px;
-    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-sm);
     border: 1px solid var(--border);
     background: var(--surface);
     color: var(--text);
@@ -129,37 +163,38 @@ const esSolicitud = tipo === "solicitud";
     font: inherit;
     font-size: 15px;
     font-weight: 600;
-    padding: 12px 16px;
+    padding: var(--space-3) var(--space-4);
     min-height: 44px;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     border: 1px solid var(--co-azul);
     background: var(--surface);
     color: var(--co-azul);
     cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .boton-secundario:hover {
+    background: var(--action-bg);
   }
 
   .boton-secundario:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    background: var(--surface);
   }
 
-  .estado-ubicacion {
+  /* Mismo estilo de texto de ayuda en todo el formulario (Similitud) */
+  .texto-ayuda {
     margin: 0;
     font-size: 13px;
-    line-height: 1.4;
-    color: var(--text-secondary);
-  }
-
-  .ayuda-contacto {
-    margin: -8px 0 0;
-    font-size: 13px;
+    line-height: 1.45;
     color: var(--text-secondary);
   }
 
   .campo-checkbox {
     flex-direction: row;
     align-items: flex-start;
-    gap: 10px;
+    gap: var(--space-2);
   }
 
   .campo-checkbox input {
@@ -183,10 +218,10 @@ const esSolicitud = tipo === "solicitud";
 
   .mensaje-error {
     margin: 0;
-    padding: 12px 14px;
-    border-radius: var(--radius-md);
-    background: rgba(206, 17, 38, 0.08);
-    border: 1px solid rgba(206, 17, 38, 0.3);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-sm);
+    background: var(--urgent-bg);
+    border: 1px solid rgba(161, 51, 39, 0.3);
     color: var(--co-rojo);
     font-size: 14px;
   }
@@ -195,18 +230,33 @@ const esSolicitud = tipo === "solicitud";
     font: inherit;
     font-size: 16px;
     font-weight: 700;
-    padding: 14px 20px;
+    padding: var(--space-4) var(--space-5);
     min-height: 48px;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     border: none;
-    background: var(--co-rojo);
     color: #fff;
     cursor: pointer;
+    transition: filter 0.15s ease;
+  }
+
+  .boton-primario:hover {
+    filter: brightness(1.08);
+  }
+
+  /* El color del botón principal repite el mismo lenguaje que la portada:
+     rojo = pedir ayuda (urgencia), azul = ofrecer ayuda (acción). Nunca al revés. */
+  .boton-primario--urgente {
+    background: var(--co-rojo);
+  }
+
+  .boton-primario--accion {
+    background: var(--co-azul);
   }
 
   .boton-primario:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    filter: none;
   }
 
   .pantalla-exito {
@@ -214,8 +264,8 @@ const esSolicitud = tipo === "solicitud";
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 12px;
-    padding: 24px 4px;
+    gap: var(--space-3);
+    padding: var(--space-5) var(--space-1);
   }
 
   .exito-icono {
@@ -224,7 +274,9 @@ const esSolicitud = tipo === "solicitud";
 
   .pantalla-exito h2 {
     margin: 0;
-    font-size: 22px;
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
     color: var(--text);
   }
 
@@ -239,15 +291,16 @@ const esSolicitud = tipo === "solicitud";
   .exito-token {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    border-radius: var(--radius-md);
-    background: var(--surface);
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-sm);
+    background: var(--surface-sunken);
     border: 1px solid var(--border);
   }
 
   .exito-token code {
     font-size: 14px;
+    font-weight: 600;
     word-break: break-all;
   }
 
@@ -256,7 +309,7 @@ const esSolicitud = tipo === "solicitud";
     font-weight: 600;
     color: var(--co-azul);
     text-decoration: none;
-    margin-top: 4px;
+    margin-top: var(--space-1);
   }
 </style>
 

@@ -21,21 +21,26 @@ const { mostrar, titulo } = Astro.props;
   .mapa-seccion {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--space-2);
   }
 
   .boton-mapa {
     font: inherit;
     font-size: 15px;
     font-weight: 600;
-    padding: 14px 18px;
+    padding: var(--space-4) var(--space-4);
     min-height: 48px;
     border-radius: var(--radius-md);
     border: 1px dashed var(--co-azul);
-    background: rgba(0, 56, 147, 0.05);
+    background: var(--action-bg);
     color: var(--co-azul);
     cursor: pointer;
     width: 100%;
+    transition: background-color 0.15s ease;
+  }
+
+  .boton-mapa:hover {
+    background: rgba(31, 61, 92, 0.14);
   }
 
   .boton-mapa:disabled {
@@ -46,7 +51,7 @@ const { mostrar, titulo } = Astro.props;
   .contenedor-mapa {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .mapa-estado {
@@ -64,15 +69,101 @@ const { mostrar, titulo } = Astro.props;
     background: var(--surface);
   }
 
-  :global(.popup-urgente) {
-    margin: 4px 0;
+  /* Chrome del popup de Leaflet: se redefine para que se sienta parte del
+     mismo sistema (radios, sombra y tipografía), no un widget aparte. */
+  :global(.leaflet-popup-content-wrapper) {
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow);
+  }
+
+  :global(.leaflet-popup-content) {
+    margin: var(--space-3) var(--space-4);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text);
+    min-width: 200px;
+  }
+
+  :global(.leaflet-popup-tip) {
+    box-shadow: var(--shadow);
+  }
+
+  /* Toda la info de un pin (tipo, urgencia, distancia) agrupada en una
+     sola cabecera — Ley de proximidad aplicada dentro del propio popup. */
+  :global(.popup-cabecera) {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+
+  /* Misma forma de badge para tipo y para urgencia (Similitud): solo cambia
+     el color, nunca la forma — así "urgente" se reconoce sin tener que leer. */
+  :global(.badge) {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
     font-weight: 700;
+    letter-spacing: 0.01em;
+    padding: 3px 10px;
+    border-radius: 999px;
+    line-height: 1.6;
+  }
+
+  :global(.badge-tipo) {
+    background: var(--surface-sunken);
+    color: var(--text);
+  }
+
+  :global(.badge-urgente) {
+    background: var(--urgent-bg);
     color: var(--co-rojo);
+  }
+
+  :global(.popup-distancia) {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  :global(.popup-agrupadas) {
+    margin: 0 0 var(--space-2);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--co-rojo);
+  }
+
+  :global(.popup-descripcion) {
+    margin: 0 0 var(--space-3);
+    color: var(--text);
+  }
+
+  :global(.popup-acciones) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+
+  :global(.popup-accion) {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--action-bg);
+    color: var(--co-azul);
+    text-decoration: none;
   }
 
   :global(.popup-reportar) {
     display: inline-block;
-    margin-top: 6px;
     font: inherit;
     font-size: 12px;
     color: var(--text-secondary);
@@ -100,11 +191,17 @@ const { mostrar, titulo } = Astro.props;
     type SolicitudPublica,
     type OfertaPublica,
   } from "../lib/api";
-  import { obtenerUbicacionActual } from "../lib/geolocalizacion";
+  import { obtenerUbicacionActual, type Coordenadas } from "../lib/geolocalizacion";
   import { etiquetaTipoAyuda } from "../lib/tipos-ayuda";
   import { enlaceWhatsapp } from "../lib/whatsapp";
 
   const RADIO_METROS = 5000;
+
+  // Paleta del sistema de diseño (no se puede leer var() de CSS desde opciones de Leaflet).
+  const COLOR_URGENTE = "#a13327";
+  const COLOR_ACCION = "#1f3d5c";
+  const COLOR_NEUTRO = "#66635d";
+  const COLOR_BLANCO = "#ffffff";
 
   interface LeafletModulo {
     map: (el: HTMLElement) => LeafletMapa;
@@ -125,6 +222,62 @@ const { mostrar, titulo } = Astro.props;
     const div = document.createElement("div");
     div.textContent = texto;
     return div.innerHTML;
+  }
+
+  // Redondeada a propósito: la ubicación que devuelve la API ya viene aproximada
+  // (~110 m), mostrar metros exactos daría una falsa sensación de precisión.
+  function calcularDistancia(origen: Coordenadas, lat: number, lng: number): string {
+    const R = 6371000;
+    const rad = Math.PI / 180;
+    const dLat = (lat - origen.lat) * rad;
+    const dLng = (lng - origen.lng) * rad;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(origen.lat * rad) * Math.cos(lat * rad) * Math.sin(dLng / 2) ** 2;
+    const metros = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const redondeado = Math.round(metros / 100) * 100;
+    return redondeado < 1000 ? `~${redondeado} m` : `~${(redondeado / 1000).toFixed(1)} km`;
+  }
+
+  function construirPopup(
+    item: SolicitudPublica | OfertaPublica,
+    tipoEntidad: "SOLICITUD" | "OFERTA",
+    distancia: string,
+  ): string {
+    const urgente = "urgente" in item && item.urgente;
+
+    const partes: string[] = ['<div class="popup-cabecera">'];
+    partes.push(`<span class="badge badge-tipo">${escaparHtml(etiquetaTipoAyuda(item.tipoAyuda))}</span>`);
+    if (urgente) {
+      partes.push('<span class="badge badge-urgente">🔴 Urgente</span>');
+    }
+    partes.push(`<span class="popup-distancia">${distancia}</span>`);
+    partes.push("</div>");
+
+    if (urgente && "solicitudesAgrupadas" in item) {
+      partes.push(`<p class="popup-agrupadas">${item.solicitudesAgrupadas} solicitudes similares en la zona</p>`);
+    }
+
+    partes.push(`<p class="popup-descripcion">${escaparHtml(item.descripcion)}</p>`);
+
+    const acciones: string[] = [];
+    if (item.contactoWhatsapp) {
+      acciones.push(
+        `<a class="popup-accion" href="${enlaceWhatsapp(item.contactoWhatsapp)}" target="_blank" rel="noopener">📱 WhatsApp</a>`,
+      );
+    }
+    if (item.contactoEmail) {
+      acciones.push(`<a class="popup-accion" href="mailto:${item.contactoEmail}">✉️ Correo</a>`);
+    }
+    if (acciones.length > 0) {
+      partes.push(`<div class="popup-acciones">${acciones.join("")}</div>`);
+    }
+
+    partes.push(
+      `<button type="button" class="popup-reportar" data-reportar-id="${item.id}" data-reportar-tipo="${tipoEntidad}">🚩 Reportar</button>`,
+    );
+
+    return partes.join("");
   }
 
   const seccion = document.querySelector<HTMLElement>(".mapa-seccion");
@@ -178,10 +331,11 @@ const { mostrar, titulo } = Astro.props;
         }).addTo(mapa);
 
         L.circleMarker([ubicacion.lat, ubicacion.lng], {
-          radius: 8,
-          color: "#003893",
-          fillColor: "#003893",
-          fillOpacity: 0.9,
+          radius: 7,
+          color: COLOR_BLANCO,
+          weight: 2,
+          fillColor: COLOR_ACCION,
+          fillOpacity: 1,
         })
           .addTo(mapa)
           .bindPopup("Tu ubicación aproximada");
@@ -197,43 +351,24 @@ const { mostrar, titulo } = Astro.props;
             ? "No hay publicaciones cercanas todavía en un radio de 5 km."
             : `${resultados.length} publicación(es) encontradas en un radio de 5 km.`;
 
+        const tipoEntidad = mostrar === "ofertas" ? "OFERTA" : "SOLICITUD";
+
         resultados.forEach((item: SolicitudPublica | OfertaPublica) => {
           const urgente = "urgente" in item && item.urgente;
-          const color = urgente ? "#ce1126" : mostrar === "ofertas" ? "#003893" : "#48484a";
+          // Blanco en el trazo (no en el relleno): asi el pin se recorta del fondo
+          // del mapa sin importar si cae sobre un area verde, cafe o gris del tile.
+          const colorRelleno = urgente ? COLOR_URGENTE : mostrar === "ofertas" ? COLOR_ACCION : COLOR_NEUTRO;
 
           const marcador = L.circleMarker([item.lat, item.lng], {
-            radius: urgente ? 11 : 8,
-            color,
-            fillColor: color,
-            fillOpacity: 0.85,
-            weight: urgente ? 3 : 1,
+            radius: urgente ? 12 : 8,
+            color: COLOR_BLANCO,
+            weight: urgente ? 3 : 2,
+            fillColor: colorRelleno,
+            fillOpacity: 0.95,
           }).addTo(mapa);
 
-          const partes: string[] = [`<strong>${escaparHtml(etiquetaTipoAyuda(item.tipoAyuda))}</strong>`];
-
-          if (urgente && "solicitudesAgrupadas" in item) {
-            partes.push(
-              `<p class="popup-urgente">🔴 Urgente — ${item.solicitudesAgrupadas} solicitudes similares</p>`,
-            );
-          }
-
-          partes.push(`<p>${escaparHtml(item.descripcion)}</p>`);
-
-          if (item.contactoWhatsapp) {
-            partes.push(
-              `<a href="${enlaceWhatsapp(item.contactoWhatsapp)}" target="_blank" rel="noopener">📱 WhatsApp</a>`,
-            );
-          }
-          if (item.contactoEmail) {
-            partes.push(`<br /><a href="mailto:${item.contactoEmail}">✉️ Correo</a>`);
-          }
-
-          const tipoEntidad = mostrar === "ofertas" ? "OFERTA" : "SOLICITUD";
-          partes.push(
-            `<br /><button type="button" class="popup-reportar" data-reportar-id="${item.id}" data-reportar-tipo="${tipoEntidad}">🚩 Reportar</button>`,
-          );
-
-          marcador.bindPopup(partes.join(""));
+          const distancia = calcularDistancia(ubicacion, item.lat, item.lng);
+          marcador.bindPopup(construirPopup(item, tipoEntidad, distancia));
         });
 
         boton.remove();

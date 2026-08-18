@@ -54,8 +54,8 @@ import Layout from "../layouts/Layout.astro";
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 40px;
-    padding: 32px 20px 40px;
+    gap: var(--space-7);
+    padding: var(--space-6) var(--space-5) var(--space-7);
     max-width: 640px;
     margin: 0 auto;
   }
@@ -64,43 +64,46 @@ import Layout from "../layouts/Layout.astro";
     text-align: center;
   }
 
+  /* El "kicker" es contexto, no una alerta: nunca usa el color de urgencia
+     (Ley de Similitud — el rojo solo puede significar "urgente" en toda la app). */
   .kicker {
-    margin: 0 0 8px;
+    margin: 0 0 var(--space-2);
     font-size: 13px;
     font-weight: 600;
-    letter-spacing: 0.02em;
-    color: var(--co-rojo);
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
     text-transform: uppercase;
   }
 
   h1 {
-    margin: 0 0 12px;
+    margin: 0 0 var(--space-3);
     font-size: clamp(28px, 7vw, 40px);
     line-height: 1.1;
     font-weight: 700;
     letter-spacing: -0.02em;
     color: var(--text);
+    text-wrap: balance;
   }
 
   .subtitle {
     margin: 0 auto;
     max-width: 46ch;
     font-size: 17px;
-    line-height: 1.5;
+    line-height: 1.55;
     color: var(--text-secondary);
   }
 
   .choices {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: var(--space-3);
   }
 
   .choice {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 20px;
+    gap: var(--space-4);
+    padding: var(--space-5);
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
@@ -117,28 +120,30 @@ import Layout from "../layouts/Layout.astro";
   .choice:hover {
     transform: translateY(-2px);
     box-shadow:
-      0 2px 4px rgba(0, 0, 0, 0.05),
-      0 14px 32px rgba(0, 0, 0, 0.08);
+      0 2px 4px rgba(28, 27, 26, 0.05),
+      0 14px 32px rgba(28, 27, 26, 0.08);
   }
 
   .choice:active {
     transform: translateY(0) scale(0.99);
   }
 
+  /* "Necesito ayuda" toma el color de urgencia a propósito: pedir ayuda es
+     la acción que más se beneficia de leerse como prioritaria. */
   .choice--rojo {
-    border-color: rgba(206, 17, 38, 0.18);
+    border-color: rgba(161, 51, 39, 0.2);
   }
 
   .choice--rojo .choice-icon {
-    background: rgba(206, 17, 38, 0.1);
+    background: var(--urgent-bg);
   }
 
   .choice--azul {
-    border-color: rgba(0, 56, 147, 0.18);
+    border-color: rgba(31, 61, 92, 0.2);
   }
 
   .choice--azul .choice-icon {
-    background: rgba(0, 56, 147, 0.1);
+    background: var(--action-bg);
   }
 
   .choice-icon {

@@ -26,8 +26,8 @@ import MapaCercanos from "../components/MapaCercanos.astro";
   main {
     display: flex;
     flex-direction: column;
-    gap: 28px;
-    padding: 24px 20px 48px;
+    gap: var(--space-6);
+    padding: var(--space-5) var(--space-5) var(--space-7);
     max-width: 520px;
     margin: 0 auto;
   }
@@ -45,16 +45,24 @@ import MapaCercanos from "../components/MapaCercanos.astro";
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 10px;
+    gap: var(--space-2);
   }
 
   .icon {
-    font-size: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    background: var(--urgent-bg);
+    font-size: 28px;
+    margin-bottom: var(--space-1);
   }
 
   h1 {
     margin: 0;
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 700;
     letter-spacing: -0.02em;
     color: var(--text);
@@ -63,7 +71,7 @@ import MapaCercanos from "../components/MapaCercanos.astro";
   .encabezado p {
     margin: 0;
     font-size: 15px;
-    line-height: 1.5;
+    line-height: 1.55;
     color: var(--text-secondary);
     max-width: 42ch;
   }

@@ -2,24 +2,52 @@
   Tema claro forzado a propósito: la mayoría de usuarios entrará desde el
   celular y muchas veces al sol, así que priorizamos alto contraste y fondos
   claros sobre "modo oscuro automático".
+
+  Sistema de diseño — herramienta de emergencia, no producto de consumo:
+  tono calmado, un único color de acción y un único color de urgencia (para
+  que "urgente" nunca compita visualmente con nada más), sin gradientes ni
+  animaciones. Mismos nombres de variable que antes (para no romper páginas
+  fuera del alcance de este rediseño: admin, ingenieros, estadísticas), pero
+  con valores desaturados y función documentada.
 */
 :root {
   color-scheme: light;
 
-  /* Colores bandera de Colombia, usados como acento, no como fondo saturado */
-  --co-amarillo: #fcd116;
-  --co-azul: #003893;
-  --co-rojo: #ce1126;
+  /* === Color: 6 tokens con función fija === */
+  --co-azul: #1f3d5c; /* ACCIÓN: enlaces, botón primario de "ayudar", foco de teclado */
+  --co-rojo: #a13327; /* URGENCIA: único color de alerta en toda la app — nunca decorativo */
+  --co-amarillo: #c9a227; /* identidad de marca (franja superior), no se usa en componentes interactivos */
 
-  --bg: #f5f5f7;
-  --surface: #ffffff;
-  --text: #1d1d1f;
-  --text-secondary: #48484a;
-  --border: rgba(0, 0, 0, 0.08);
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
-  --radius-lg: 22px;
-  --radius-md: 14px;
+  --bg: #f6f5f3; /* lienzo base, cálido y neutro */
+  --surface: #ffffff; /* tarjetas y contenedores (Ley de cierre) */
+  --surface-sunken: #efeeea; /* fondos "hundidos": inputs en reposo, badges, bloques de acción */
 
+  --text: #1c1b1a; /* texto principal */
+  --text-secondary: #66635d; /* texto secundario, labels, meta-información */
+
+  --border: rgba(28, 27, 26, 0.12); /* bordes sutiles — cierre sin líneas pesadas */
+  --shadow: 0 1px 2px rgba(28, 27, 26, 0.04), 0 6px 16px rgba(28, 27, 26, 0.06);
+
+  --urgent-bg: rgba(161, 51, 39, 0.09); /* fondo tenue para badges/bloques de urgencia */
+  --action-bg: rgba(31, 61, 92, 0.08); /* fondo tenue para acentos de acción */
+
+  /* === Radios: mayor en contenedores, menor en elementos internos === */
+  --radius-lg: 20px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+
+  /* === Espaciado: escala consistente, usar en vez de valores sueltos === */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 40px;
+
+  /* === Tipografía: fuente del sistema a propósito (cero peso extra de red
+     en conexiones móviles limitadas). La jerarquía se logra con tamaño/peso/
+     tracking, no con una fuente "con carácter" que cueste una descarga. === */
   --font-sans:
     -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto,
     Helvetica, Arial, sans-serif;
@@ -32,6 +60,7 @@
 html {
   font-family: var(--font-sans);
   -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
