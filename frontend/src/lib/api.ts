@@ -106,3 +106,56 @@ export function buscarOfertas(params: BusquedaCercaniaParams): Promise<OfertaPub
     manejarRespuesta<OfertaPublica[]>(res),
   );
 }
+
+export interface IngenieroRegistroPayload {
+  nombre: string;
+  email: string;
+  password: string;
+  documentoIdentidad: string;
+  universidad: string;
+  fechaGraduacion: string;
+  soporte: File;
+}
+
+export interface IngenieroRegistroResponse {
+  id: string;
+  estadoVerificacion: "PENDIENTE" | "VERIFICADO" | "RECHAZADO";
+}
+
+export function registrarIngeniero(
+  payload: IngenieroRegistroPayload,
+): Promise<IngenieroRegistroResponse> {
+  const form = new FormData();
+  form.set("nombre", payload.nombre);
+  form.set("email", payload.email);
+  form.set("password", payload.password);
+  form.set("documentoIdentidad", payload.documentoIdentidad);
+  form.set("universidad", payload.universidad);
+  form.set("fechaGraduacion", payload.fechaGraduacion);
+  form.set("soporte", payload.soporte);
+
+  // Sin header Content-Type manual: el navegador arma el boundary del multipart solo.
+  return fetch(`${API_URL}/api/ingenieros/registro`, {
+    method: "POST",
+    body: form,
+  }).then((res) => manejarRespuesta<IngenieroRegistroResponse>(res));
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  rol: string;
+  estadoVerificacion: "PENDIENTE" | "VERIFICADO" | "RECHAZADO" | null;
+}
+
+export function login(payload: LoginPayload): Promise<LoginResponse> {
+  return fetch(`${API_URL}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  }).then((res) => manejarRespuesta<LoginResponse>(res));
+}

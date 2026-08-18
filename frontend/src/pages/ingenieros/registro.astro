@@ -1,0 +1,351 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Registro de ingeniero estructural — ReconstruyeCol">
+  <main>
+    <a class="back" href="/quiero-ayudar">← Volver</a>
+    <header class="encabezado">
+      <span class="icon" aria-hidden="true">🏗️</span>
+      <h1>Registro de ingeniero estructural</h1>
+      <p>
+        Tu registro queda en revisión hasta que un administrador verifique tu soporte
+        (diploma o tarjeta profesional). Puedes iniciar sesión y publicar mientras tanto,
+        pero tu oferta se mostrará como "pendiente de verificación" hasta ser aprobada.
+      </p>
+    </header>
+
+    <form id="formulario-registro" class="formulario" novalidate>
+      <div class="campo">
+        <label for="campo-nombre">Nombre completo</label>
+        <input id="campo-nombre" name="nombre" type="text" required autocomplete="name" />
+      </div>
+
+      <div class="campo">
+        <label for="campo-email">Correo</label>
+        <input id="campo-email" name="email" type="email" required autocomplete="email" placeholder="tucorreo@ejemplo.com" />
+      </div>
+
+      <div class="campo">
+        <label for="campo-password">Contraseña</label>
+        <input id="campo-password" name="password" type="password" required minlength="8" autocomplete="new-password" />
+        <span class="campo-ayuda">Mínimo 8 caracteres.</span>
+      </div>
+
+      <div class="campo">
+        <label for="campo-documento">Número de documento de identidad</label>
+        <input id="campo-documento" name="documentoIdentidad" type="text" inputmode="numeric" required maxlength="15" placeholder="Ej: 1020304050" />
+        <span class="campo-ayuda">Solo se guarda de forma irreversible (hash), nunca en texto plano.</span>
+      </div>
+
+      <div class="campo">
+        <label for="campo-universidad">Universidad</label>
+        <input id="campo-universidad" name="universidad" type="text" required />
+      </div>
+
+      <div class="campo">
+        <label for="campo-fecha-graduacion">Fecha de graduación</label>
+        <input id="campo-fecha-graduacion" name="fechaGraduacion" type="date" required />
+      </div>
+
+      <div class="campo">
+        <label for="campo-soporte">Soporte (diploma o tarjeta profesional)</label>
+        <input id="campo-soporte" name="soporte" type="file" required accept="application/pdf,image/jpeg,image/png" />
+        <span class="campo-ayuda">PDF o foto legible. Solo lo ven los administradores durante la verificación.</span>
+      </div>
+
+      <div class="campo campo-checkbox">
+        <input id="campo-consentimiento" name="consentimiento" type="checkbox" required />
+        <label for="campo-consentimiento">
+          Autorizo el tratamiento de estos datos para verificar mi perfil profesional.
+          <a href="/aviso-privacidad">Ver aviso de privacidad</a>.
+        </label>
+      </div>
+
+      <p id="mensaje-error" class="mensaje-error" role="alert" hidden></p>
+
+      <button type="submit" id="boton-enviar" class="boton-primario">Registrarme</button>
+    </form>
+
+    <div id="pantalla-exito" class="pantalla-exito" hidden>
+      <span class="exito-icono" aria-hidden="true">⏳</span>
+      <h2>¡Registro recibido!</h2>
+      <p>
+        Tu cuenta quedó en estado <strong>pendiente de verificación</strong>. Un administrador
+        va a revisar tu soporte pronto. Ya puedes iniciar sesión.
+      </p>
+      <a href="/ingenieros/login" class="boton-primario">Iniciar sesión</a>
+      <a href="/" class="boton-texto">Volver al inicio</a>
+    </div>
+
+    <p class="enlace-login">¿Ya tienes cuenta? <a href="/ingenieros/login">Inicia sesión</a></p>
+  </main>
+</Layout>
+
+<style>
+  main {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding: 24px 20px 48px;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  .back {
+    align-self: flex-start;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--co-azul);
+    text-decoration: none;
+  }
+
+  .encabezado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .icon {
+    font-size: 36px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .encabezado p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    max-width: 44ch;
+  }
+
+  .formulario {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="date"],
+  input[type="file"] {
+    font: inherit;
+    font-size: 16px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    min-height: 44px;
+  }
+
+  .campo-ayuda {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .campo-checkbox {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .campo-checkbox input {
+    margin-top: 3px;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .campo-checkbox label {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+
+  .campo-checkbox a {
+    color: var(--co-azul);
+    font-weight: 600;
+  }
+
+  .mensaje-error {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    background: rgba(206, 17, 38, 0.08);
+    border: 1px solid rgba(206, 17, 38, 0.3);
+    color: var(--co-rojo);
+    font-size: 14px;
+  }
+
+  .boton-primario {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 14px 20px;
+    min-height: 48px;
+    border-radius: var(--radius-md);
+    border: none;
+    background: var(--co-rojo);
+    color: #fff;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .boton-primario:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .pantalla-exito {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    padding: 24px 4px;
+  }
+
+  .exito-icono {
+    font-size: 40px;
+  }
+
+  .pantalla-exito h2 {
+    margin: 0;
+    font-size: 22px;
+    color: var(--text);
+  }
+
+  .pantalla-exito p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    max-width: 40ch;
+  }
+
+  .boton-texto {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--co-azul);
+    text-decoration: none;
+    margin-top: 4px;
+  }
+
+  .enlace-login {
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .enlace-login a {
+    color: var(--co-azul);
+    font-weight: 600;
+    text-decoration: none;
+  }
+</style>
+
+<script>
+  import { registrarIngeniero, ApiError } from "../../lib/api";
+
+  const formulario = document.getElementById("formulario-registro") as HTMLFormElement | null;
+  const mensajeError = document.getElementById("mensaje-error");
+  const botonEnviar = document.getElementById("boton-enviar") as HTMLButtonElement | null;
+  const pantallaExito = document.getElementById("pantalla-exito");
+
+  function mostrarError(texto: string): void {
+    if (!mensajeError) return;
+    mensajeError.textContent = texto;
+    mensajeError.hidden = false;
+  }
+
+  function ocultarError(): void {
+    if (!mensajeError) return;
+    mensajeError.hidden = true;
+    mensajeError.textContent = "";
+  }
+
+  if (formulario && botonEnviar && pantallaExito) {
+    formulario.addEventListener("submit", async (evento) => {
+      evento.preventDefault();
+      ocultarError();
+
+      const datos = new FormData(formulario);
+      const password = String(datos.get("password") || "");
+      const documentoIdentidad = String(datos.get("documentoIdentidad") || "").trim();
+      const fechaGraduacion = String(datos.get("fechaGraduacion") || "");
+      const soporte = datos.get("soporte") as File | null;
+      const consentimiento = datos.get("consentimiento") === "on";
+
+      if (password.length < 8) {
+        mostrarError("La contraseña debe tener al menos 8 caracteres.");
+        return;
+      }
+      if (!/^\d{6,15}$/.test(documentoIdentidad)) {
+        mostrarError("El documento debe contener solo números (6 a 15 dígitos).");
+        return;
+      }
+      if (!fechaGraduacion || new Date(fechaGraduacion) > new Date()) {
+        mostrarError("La fecha de graduación no puede ser futura.");
+        return;
+      }
+      if (!soporte || soporte.size === 0) {
+        mostrarError("Adjunta tu diploma o tarjeta profesional.");
+        return;
+      }
+      if (!consentimiento) {
+        mostrarError("Debes aceptar el aviso de privacidad para continuar.");
+        return;
+      }
+
+      botonEnviar.disabled = true;
+      botonEnviar.textContent = "Enviando...";
+
+      try {
+        await registrarIngeniero({
+          nombre: String(datos.get("nombre") || "").trim(),
+          email: String(datos.get("email") || "").trim(),
+          password,
+          documentoIdentidad,
+          universidad: String(datos.get("universidad") || "").trim(),
+          fechaGraduacion,
+          soporte,
+        });
+
+        formulario.hidden = true;
+        pantallaExito.hidden = false;
+      } catch (error) {
+        const mensaje = error instanceof ApiError ? error.message : "No se pudo completar el registro. Intenta de nuevo.";
+        mostrarError(mensaje);
+        botonEnviar.disabled = false;
+        botonEnviar.textContent = "Registrarme";
+      }
+    });
+  }
+</script>

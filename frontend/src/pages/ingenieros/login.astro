@@ -1,0 +1,192 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Inicia sesión — ReconstruyeCol">
+  <main>
+    <a class="back" href="/quiero-ayudar">← Volver</a>
+    <header class="encabezado">
+      <span class="icon" aria-hidden="true">🔑</span>
+      <h1>Inicia sesión</h1>
+      <p>Solo para ingenieros estructurales registrados.</p>
+    </header>
+
+    <form id="formulario-login" class="formulario" novalidate>
+      <div class="campo">
+        <label for="campo-email">Correo</label>
+        <input id="campo-email" name="email" type="email" required autocomplete="email" />
+      </div>
+
+      <div class="campo">
+        <label for="campo-password">Contraseña</label>
+        <input id="campo-password" name="password" type="password" required autocomplete="current-password" />
+      </div>
+
+      <p id="mensaje-error" class="mensaje-error" role="alert" hidden></p>
+
+      <button type="submit" id="boton-enviar" class="boton-primario">Iniciar sesión</button>
+    </form>
+
+    <p class="enlace-registro">¿No tienes cuenta? <a href="/ingenieros/registro">Regístrate</a></p>
+  </main>
+</Layout>
+
+<style>
+  main {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding: 24px 20px 48px;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .back {
+    align-self: flex-start;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--co-azul);
+    text-decoration: none;
+  }
+
+  .encabezado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .icon {
+    font-size: 36px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .encabezado p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .formulario {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  input[type="email"],
+  input[type="password"] {
+    font: inherit;
+    font-size: 16px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    min-height: 44px;
+  }
+
+  .mensaje-error {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    background: rgba(206, 17, 38, 0.08);
+    border: 1px solid rgba(206, 17, 38, 0.3);
+    color: var(--co-rojo);
+    font-size: 14px;
+  }
+
+  .boton-primario {
+    font: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 14px 20px;
+    min-height: 48px;
+    border-radius: var(--radius-md);
+    border: none;
+    background: var(--co-rojo);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .boton-primario:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .enlace-registro {
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .enlace-registro a {
+    color: var(--co-azul);
+    font-weight: 600;
+    text-decoration: none;
+  }
+</style>
+
+<script>
+  import { login, ApiError } from "../../lib/api";
+  import { guardarSesion } from "../../lib/auth";
+
+  const formulario = document.getElementById("formulario-login") as HTMLFormElement | null;
+  const mensajeError = document.getElementById("mensaje-error");
+  const botonEnviar = document.getElementById("boton-enviar") as HTMLButtonElement | null;
+
+  function mostrarError(texto: string): void {
+    if (!mensajeError) return;
+    mensajeError.textContent = texto;
+    mensajeError.hidden = false;
+  }
+
+  if (formulario && botonEnviar) {
+    formulario.addEventListener("submit", async (evento) => {
+      evento.preventDefault();
+      if (mensajeError) {
+        mensajeError.hidden = true;
+      }
+
+      const datos = new FormData(formulario);
+      const email = String(datos.get("email") || "").trim();
+      const password = String(datos.get("password") || "");
+
+      botonEnviar.disabled = true;
+      botonEnviar.textContent = "Ingresando...";
+
+      try {
+        const respuesta = await login({ email, password });
+        guardarSesion({
+          token: respuesta.token,
+          estadoVerificacion: respuesta.estadoVerificacion ?? "PENDIENTE",
+        });
+        window.location.href = "/ingenieros/panel";
+      } catch (error) {
+        const mensaje = error instanceof ApiError ? error.message : "No se pudo iniciar sesión. Intenta de nuevo.";
+        mostrarError(mensaje);
+        botonEnviar.disabled = false;
+        botonEnviar.textContent = "Iniciar sesión";
+      }
+    });
+  }
+</script>

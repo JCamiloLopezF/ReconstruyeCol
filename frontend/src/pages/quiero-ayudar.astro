@@ -18,6 +18,11 @@ import MapaCercanos from "../components/MapaCercanos.astro";
 
     <FormularioPublicacion tipo="oferta" />
 
+    <p class="enlace-ingeniero">
+      ¿Eres ingeniero o ingeniera estructural?
+      <a href="/ingenieros/registro">Regístrate para ofrecer asesoría verificada</a>.
+    </p>
+
     <MapaCercanos mostrar="solicitudes" titulo="Ver qué se necesita cerca de ti" />
   </main>
 </Layout>
@@ -66,5 +71,19 @@ import MapaCercanos from "../components/MapaCercanos.astro";
     line-height: 1.5;
     color: var(--text-secondary);
     max-width: 42ch;
+  }
+
+  .enlace-ingeniero {
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    margin: -8px 0 0;
+  }
+
+  .enlace-ingeniero a {
+    color: var(--co-azul);
+    font-weight: 600;
+    text-decoration: none;
   }
 </style>
