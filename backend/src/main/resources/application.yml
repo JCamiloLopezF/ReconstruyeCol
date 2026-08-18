@@ -48,5 +48,7 @@ app:
   supabase:
     # URL del proyecto (https://<ref>.supabase.co), NO el host de la base de datos (db.<ref>...).
     url: ${SUPABASE_URL:}
-    service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
+    # Secret key nueva de Supabase (Settings -> API Keys -> Secret keys, formato sb_secret_...),
+    # no la anon/publishable key.
+    secret-key: ${SUPABASE_SECRET_KEY:}
     storage-bucket: ${SUPABASE_STORAGE_BUCKET:soportes-ingenieros}

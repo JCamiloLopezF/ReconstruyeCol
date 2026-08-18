@@ -12,6 +12,10 @@ import java.io.IOException;
 /**
  * Sube los soportes de ingenieros al bucket privado de Supabase Storage (mismo proyecto que la base
  * de datos). Requiere que el bucket ya exista y sea privado (ver docs/03-despliegue.md).
+ *
+ * Usa el nuevo sistema de API keys de Supabase (secret key, formato sb_secret_...): la key va en el
+ * header "apikey", NUNCA en "Authorization: Bearer" (con ese header, la plataforma intenta parsearla
+ * como JWT y la rechaza) — ver guia de migracion de Supabase.
  */
 @Service
 public class SupabaseSoporteStorageService implements SoporteStorageService {
@@ -21,12 +25,12 @@ public class SupabaseSoporteStorageService implements SoporteStorageService {
 
     public SupabaseSoporteStorageService(
             @Value("${app.supabase.url:}") String supabaseUrl,
-            @Value("${app.supabase.service-role-key:}") String serviceRoleKey,
+            @Value("${app.supabase.secret-key:}") String secretKey,
             @Value("${app.supabase.storage-bucket:soportes-ingenieros}") String bucket) {
         this.bucket = bucket;
         this.restClient = RestClient.builder()
                 .baseUrl(supabaseUrl + "/storage/v1")
-                .defaultHeader("Authorization", "Bearer " + serviceRoleKey)
+                .defaultHeader("apikey", secretKey)
                 .build();
     }
 
