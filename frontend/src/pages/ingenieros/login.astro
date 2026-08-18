@@ -171,6 +171,11 @@ import Layout from "../../layouts/Layout.astro";
       const email = String(datos.get("email") || "").trim();
       const password = String(datos.get("password") || "");
 
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        mostrarError("El correo no es válido. Verifica que tenga el formato nombre@dominio.com.");
+        return;
+      }
+
       botonEnviar.disabled = true;
       botonEnviar.textContent = "Ingresando...";
 

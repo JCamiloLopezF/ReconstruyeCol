@@ -1,5 +1,6 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import { UNIVERSIDADES_SUGERIDAS } from "../../lib/universidades";
 ---
 
 <Layout title="Registro de ingeniero estructural — ReconstruyeCol">
@@ -40,7 +41,11 @@ import Layout from "../../layouts/Layout.astro";
 
       <div class="campo">
         <label for="campo-universidad">Universidad</label>
-        <input id="campo-universidad" name="universidad" type="text" required />
+        <input id="campo-universidad" name="universidad" type="text" required list="lista-universidades" autocomplete="off" />
+        <datalist id="lista-universidades">
+          {UNIVERSIDADES_SUGERIDAS.map((u) => <option value={u} />)}
+        </datalist>
+        <span class="campo-ayuda">Empieza a escribir y elige de la lista, o escribe la tuya si no aparece.</span>
       </div>
 
       <div class="campo">
@@ -278,6 +283,13 @@ import Layout from "../../layouts/Layout.astro";
   const mensajeError = document.getElementById("mensaje-error");
   const botonEnviar = document.getElementById("boton-enviar") as HTMLButtonElement | null;
   const pantallaExito = document.getElementById("pantalla-exito");
+  const campoDocumento = document.getElementById("campo-documento") as HTMLInputElement | null;
+
+  // Filtra en tiempo real: solo deja escribir dígitos, igual que el campo de WhatsApp
+  // del formulario de solicitud/oferta.
+  campoDocumento?.addEventListener("input", () => {
+    campoDocumento.value = campoDocumento.value.replace(/\D/g, "");
+  });
 
   function mostrarError(texto: string): void {
     if (!mensajeError) return;
@@ -297,12 +309,17 @@ import Layout from "../../layouts/Layout.astro";
       ocultarError();
 
       const datos = new FormData(formulario);
+      const email = String(datos.get("email") || "").trim();
       const password = String(datos.get("password") || "");
       const documentoIdentidad = String(datos.get("documentoIdentidad") || "").trim();
       const fechaGraduacion = String(datos.get("fechaGraduacion") || "");
       const soporte = datos.get("soporte") as File | null;
       const consentimiento = datos.get("consentimiento") === "on";
 
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        mostrarError("El correo no es válido. Verifica que tenga el formato nombre@dominio.com.");
+        return;
+      }
       if (password.length < 8) {
         mostrarError("La contraseña debe tener al menos 8 caracteres.");
         return;
@@ -330,7 +347,7 @@ import Layout from "../../layouts/Layout.astro";
       try {
         await registrarIngeniero({
           nombre: String(datos.get("nombre") || "").trim(),
-          email: String(datos.get("email") || "").trim(),
+          email,
           password,
           documentoIdentidad,
           universidad: String(datos.get("universidad") || "").trim(),
