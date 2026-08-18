@@ -27,8 +27,8 @@ public final class OfertaMapper {
                 oferta.getId(),
                 oferta.getTipoAyuda(),
                 oferta.getDescripcion(),
-                oferta.getUbicacion().getY(),
-                oferta.getUbicacion().getX(),
+                GeoUtils.aproximar(oferta.getUbicacion().getY()),
+                GeoUtils.aproximar(oferta.getUbicacion().getX()),
                 oferta.getContactoWhatsapp(),
                 oferta.getContactoEmail(),
                 oferta.getCreatedAt());

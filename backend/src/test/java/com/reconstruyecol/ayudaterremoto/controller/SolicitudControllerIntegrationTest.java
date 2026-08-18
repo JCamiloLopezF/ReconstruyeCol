@@ -116,6 +116,30 @@ class SolicitudControllerIntegrationTest {
     }
 
     @Test
+    void buscarCercanas_conRadioMayorA50km_retorna400() {
+        String url = urlBase() + "?lat=5.6947&lng=-76.6584&radio=50000001";
+        ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void buscarCercanas_noExponeLaCoordenadaExacta() {
+        double latExacta = 5.694712345;
+        double lngExacta = -76.658412345;
+        crear(TipoAyuda.OTRO, "Prueba de precision de coordenadas", latExacta, lngExacta);
+
+        String url = urlBase() + "?lat=" + latExacta + "&lng=" + lngExacta + "&radio=100&tipo=OTRO";
+        ResponseEntity<SolicitudResponse[]> response = restTemplate.getForEntity(url, SolicitudResponse[].class);
+
+        assertThat(response.getBody()).hasSize(1);
+        SolicitudResponse resultado = response.getBody()[0];
+        // Redondeado a 3 decimales: no debe coincidir con el valor exacto que se envio a crear.
+        assertThat(resultado.getLat()).isNotEqualTo(latExacta);
+        assertThat(resultado.getLat()).isEqualTo(Math.round(latExacta * 1000.0) / 1000.0);
+        assertThat(resultado.getLng()).isEqualTo(Math.round(lngExacta * 1000.0) / 1000.0);
+    }
+
+    @Test
     void crearSolicitud_alLlegarCuartaCercana_marcaClusterComoUrgenteSinDescartarDatos() {
         // Punto alejado de los demas tests de esta clase para no compartir datos con ellos
         // (el contenedor de Postgres es estatico y se reusa entre metodos de test).

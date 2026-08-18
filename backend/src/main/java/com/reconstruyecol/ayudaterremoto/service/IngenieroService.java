@@ -14,10 +14,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class IngenieroService {
+
+    private static final Set<String> TIPOS_SOPORTE_PERMITIDOS =
+            Set.of("application/pdf", "image/jpeg", "image/png");
 
     private final IngenieroRepository ingenieroRepository;
     private final SoporteStorageService soporteStorageService;
@@ -40,6 +44,11 @@ public class IngenieroService {
         String documentoHash = HashUtils.sha256(request.getDocumentoIdentidad());
         if (ingenieroRepository.existsByDocumentoIdentidadHash(documentoHash)) {
             throw new IllegalArgumentException("Ya existe un registro con este documento de identidad");
+        }
+
+        String contentType = request.getSoporte().getContentType();
+        if (contentType == null || !TIPOS_SOPORTE_PERMITIDOS.contains(contentType.toLowerCase())) {
+            throw new IllegalArgumentException("El soporte debe ser un PDF, JPG o PNG");
         }
 
         String rutaSoporte = "ingenieros/%s-%s".formatted(

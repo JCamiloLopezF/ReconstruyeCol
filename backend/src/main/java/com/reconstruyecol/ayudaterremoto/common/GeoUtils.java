@@ -19,4 +19,13 @@ public final class GeoUtils {
         point.setSRID(SRID_WGS84);
         return point;
     }
+
+    /**
+     * Redondea a 3 decimales (~110 m de margen) para no exponer la ubicación exacta en las
+     * respuestas públicas (docs/02-diseno-tecnico.md, sección 8). Solo se usa al mapear hacia los
+     * DTOs de salida — la geometría guardada y las búsquedas por cercanía siguen siendo exactas.
+     */
+    public static double aproximar(double valor) {
+        return Math.round(valor * 1000.0) / 1000.0;
+    }
 }

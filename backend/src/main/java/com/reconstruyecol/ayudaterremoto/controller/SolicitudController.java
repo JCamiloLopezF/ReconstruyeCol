@@ -48,7 +48,8 @@ public class SolicitudController {
             @DecimalMin(value = "-180.0", message = "La longitud debe estar entre -180 y 180")
             @DecimalMax(value = "180.0", message = "La longitud debe estar entre -180 y 180") Double lng,
             @RequestParam @NotNull(message = "El radio es obligatorio")
-            @Positive(message = "El radio debe ser mayor a 0") Double radio,
+            @Positive(message = "El radio debe ser mayor a 0")
+            @DecimalMax(value = "50000.0", message = "El radio no puede superar 50 km") Double radio,
             @RequestParam(required = false) TipoAyuda tipo) {
         return solicitudService.buscarCercanas(lat, lng, radio, tipo);
     }

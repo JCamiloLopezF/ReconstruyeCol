@@ -121,4 +121,21 @@ class AuthControllerIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
+
+    @Test
+    void login_conMuchosIntentosFallidos_bloqueaTemporalmente() {
+        crearIngeniero("fuerza-bruta@example.com", "password-correcta", "1020304099");
+
+        LoginRequest request = new LoginRequest();
+        request.setEmail("fuerza-bruta@example.com");
+        request.setPassword("password-equivocada");
+
+        HttpStatus ultimoEstado = null;
+        for (int i = 0; i < 6; i++) {
+            ResponseEntity<Map> response = restTemplate.postForEntity(urlBase() + "/login", request, Map.class);
+            ultimoEstado = (HttpStatus) response.getStatusCode();
+        }
+
+        assertThat(ultimoEstado).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+    }
 }

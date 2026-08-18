@@ -108,6 +108,30 @@ class IngenieroControllerIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
+    @Test
+    void registro_conTipoDeArchivoNoPermitido_retorna400() {
+        MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
+        form.add("nombre", "Ana Torres");
+        form.add("email", "archivo-invalido@example.com");
+        form.add("password", "password123");
+        form.add("documentoIdentidad", "3030303030");
+        form.add("universidad", "Universidad Nacional");
+        form.add("fechaGraduacion", "2020-06-15");
+        form.add("soporte", new ByteArrayResource("contenido-ejecutable".getBytes()) {
+            @Override
+            public String getFilename() {
+                return "soporte.exe";
+            }
+        });
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        ResponseEntity<Map> response = restTemplate.postForEntity(
+                urlBase() + "/registro", new HttpEntity<>(form, headers), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
     private HttpEntity<MultiValueMap<String, Object>> formularioValido(String email, String documento) {
         MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
         form.add("nombre", "Ana Torres");
