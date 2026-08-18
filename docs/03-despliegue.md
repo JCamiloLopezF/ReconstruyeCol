@@ -92,6 +92,38 @@ No commitear `.vercel/` (ya debería quedar fuera vía `.gitignore` de Vercel) n
 | `PUBLIC_API_URL` | Build de Vercel (frontend) | `https://reconstruyecol-backend-production.up.railway.app` |
 | `PUBLIC_CONTACTO_ADMIN_EMAIL` | Build de Vercel (frontend) | `equipo@reconstruyecol.org` |
 
+## Capacidad y pruebas de carga
+
+Prueba de carga con k6 (`load-tests/k6/`) contra producción el 2026-08-17, rampa gradual pedida
+por el usuario en vez de un salto directo a 1.000 concurrentes (10 → 100 → 500 VUs; se detuvo
+antes de 1.000 porque ya había suficiente señal de dónde está el límite):
+
+| Endpoint | VUs | Error rate | p95 |
+|---|---|---|---|
+| GET /api/solicitudes | 10 | 0% | 650ms |
+| GET /api/solicitudes | 100 | 6% | 1.61s |
+| GET /api/solicitudes | 500 | **44%** | 1.42s (techo) |
+| POST /api/solicitudes | 10 | 0% | 925ms |
+| POST /api/solicitudes | 100 | **37%** | 3.68s |
+
+**No aguanta ~1.000 concurrentes** — empieza a degradar desde ~100 y colapsa parcialmente desde
+500. El sitio se recuperó solo en ambos casos apenas bajó la carga (no quedó caído). Causa más
+probable: `DB_POOL_SIZE=5` (HikariCP), ajustado a propósito para el límite de conexiones del
+plan gratuito de Supabase (sección 11 del diseño técnico) — con solo 5 conexiones a la vez,
+cientos de requests concurrentes quedan en cola hasta agotar el timeout. La instancia
+`shared-cpu-1x` / 512 MB de Railway también es un techo real aparte.
+
+**No se implementaron cambios todavía** — esto es un hallazgo, no un fix. Si se quiere aumentar
+la capacidad real, las palancas disponibles (a decidir con el usuario, implican costo o cambios
+de arquitectura):
+- Subir `DB_POOL_SIZE` — requiere un plan de Supabase con más conexiones permitidas (el free
+  tier tiene un límite bajo; excederlo rompe otras conexiones, no solo esta).
+- Instancia de Railway más grande (deja de ser gratis en el Trial).
+- Cache de lectura para `GET /api/solicitudes`/`ofertas` (ej. Caffeine in-memory con TTL corto),
+  ya que la mayoría de tráfico esperado es de lectura, no de escritura.
+- Rate limiting a nivel de API (ya existe solo para `/api/auth/login`) para que un pico no
+  degrade el servicio para todos por igual.
+
 ## Pendiente (no incluido en esta tarea)
 
 - CI/CD explícito del backend: Railway ya redeploya solo en cada push a `main` que toque `backend/**` una vez conectado el repo (no hace falta workflow de GitHub Actions aparte).
