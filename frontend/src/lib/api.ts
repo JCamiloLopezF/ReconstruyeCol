@@ -1,4 +1,5 @@
 import type { TipoAyuda } from "./tipos-ayuda";
+import type { TipoOrganizacion } from "./tipos-organizacion";
 
 const API_URL = import.meta.env.PUBLIC_API_URL || "http://localhost:8080";
 
@@ -256,4 +257,28 @@ export function obtenerEstadisticasPublicas(): Promise<EstadisticasPublicas> {
   return fetch(`${API_URL}/api/estadisticas/publicas`).then((res) =>
     manejarRespuesta<EstadisticasPublicas>(res),
   );
+}
+
+export interface OrganizacionRegistroPayload {
+  nombre: string;
+  tipo: TipoOrganizacion;
+  lat: number;
+  lng: number;
+  contacto: string;
+}
+
+export interface OrganizacionRegistroResponse {
+  id: string;
+  tipo: TipoOrganizacion;
+  verificada: boolean;
+}
+
+export function registrarOrganizacion(
+  payload: OrganizacionRegistroPayload,
+): Promise<OrganizacionRegistroResponse> {
+  return fetch(`${API_URL}/api/organizaciones`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  }).then((res) => manejarRespuesta<OrganizacionRegistroResponse>(res));
 }
