@@ -22,6 +22,11 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
 server:
   port: ${PORT:8080}
 
@@ -33,3 +38,15 @@ management:
   endpoint:
     health:
       show-details: never
+
+app:
+  jwt:
+    # Default solo para desarrollo local. En produccion SIEMPRE sobreescribir con JWT_SECRET
+    # (minimo 32 caracteres aleatorios, ej. `openssl rand -base64 32`) - ver docs/03-despliegue.md.
+    secret: ${JWT_SECRET:clave-secreta-local-de-desarrollo-cambiar-en-produccion-0123456789}
+    expiration-minutes: ${JWT_EXPIRATION_MINUTES:1440}
+  supabase:
+    # URL del proyecto (https://<ref>.supabase.co), NO el host de la base de datos (db.<ref>...).
+    url: ${SUPABASE_URL:}
+    service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
+    storage-bucket: ${SUPABASE_STORAGE_BUCKET:soportes-ingenieros}

@@ -22,6 +22,7 @@ Basado en la sección 10 de `02-diseno-tecnico.md` (Vercel + Fly.io/Railway + Su
    ```
    Por ejemplo, si el pooler queda en `aws-0-us-east-1.pooler.supabase.com`, el `DB_URL` completo es `jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require` — nada más (usuario y password van aparte).
 5. Flyway (`spring.flyway.enabled: true`) corre las migraciones de `backend/src/main/resources/db/migration` automáticamente al arrancar — no hace falta correrlas a mano.
+6. **Bucket privado para soportes de ingenieros** (una sola vez, antes de probar el registro de ingenieros): menú lateral → **Storage** → **New bucket** → nombre `soportes-ingenieros` (o el que se le pase a `SUPABASE_STORAGE_BUCKET`) → dejarlo **Private** (NO marcar "Public bucket" — el soporte de un ingeniero solo debe ser visible para administradores, regla del `CLAUDE.md` raíz). El backend sube ahí vía la API de Storage con la `service_role key`, no hace falta configurar políticas RLS para que el backend suba archivos (la service_role key las salta), pero sí para que un futuro panel admin pueda leerlos con URLs firmadas.
 
 ## 2. Backend en Railway (Trial, sin tarjeta)
 
@@ -41,6 +42,10 @@ No requiere CLI (aunque existe y es opcional). Todo se hace desde el dashboard:
    - `DB_USERNAME` → `postgres.<ref-proyecto>` (con el punto y el ref, formato del pooler)
    - `DB_PASSWORD` → la contraseña de Supabase
    - `DB_POOL_SIZE` → `5`
+   - `JWT_SECRET` → una clave aleatoria de al menos 32 caracteres, ej. generada con `openssl rand -base64 32` (usada para firmar los JWT del login de ingenieros/administradores — **sin esto en producción, el login sigue "funcionando" pero con la clave insegura por defecto del código**, hay que sobreescribirla siempre)
+   - `SUPABASE_URL` → `https://<ref-proyecto>.supabase.co` (URL del **proyecto/API**, ojo que es distinta al host de la base de datos `db.<ref-proyecto>.supabase.co` o al del pooler — se ve en Project Settings → API → Project URL)
+   - `SUPABASE_SERVICE_ROLE_KEY` → la **service_role key** (Project Settings → API → Project API keys), no la `anon` key — necesaria para subir archivos a un bucket privado desde el backend
+   - `SUPABASE_STORAGE_BUCKET` → opcional, default `soportes-ingenieros` si no se setea
 5. **Deploy** → esperar el primer build (~3-5 min: build de Docker + arranque de Spring Boot + migraciones de Flyway).
 6. En **Settings → Networking**, generar un dominio público (**Generate Domain**) si no se creó solo. Queda con forma `https://reconstruyecol-backend-production.up.railway.app`.
 7. Verificar: `https://<tu-dominio>.up.railway.app/actuator/health` → debe responder `{"status":"UP"}`.
@@ -77,6 +82,10 @@ No commitear `.vercel/` (ya debería quedar fuera vía `.gitignore` de Vercel) n
 | `DB_USERNAME` | Variable en Railway (backend) | `postgres.xxxx` (con el ref del proyecto, formato del pooler) |
 | `DB_PASSWORD` | Variable en Railway (backend) | — |
 | `DB_POOL_SIZE` | Variable en Railway (backend) | `5` (default seguro para el plan gratuito de Supabase) |
+| `JWT_SECRET` | Variable en Railway (backend) | clave aleatoria ≥32 caracteres (`openssl rand -base64 32`) — firma los JWT de login |
+| `SUPABASE_URL` | Variable en Railway (backend) | `https://xxxx.supabase.co` (URL del proyecto/API, no la de la base de datos) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Variable en Railway (backend) | la `service_role key` de Project Settings → API |
+| `SUPABASE_STORAGE_BUCKET` | Variable en Railway (backend, opcional) | `soportes-ingenieros` (default si no se setea) |
 | `PUBLIC_API_URL` | Build de Vercel (frontend) | `https://reconstruyecol-backend-production.up.railway.app` |
 | `PUBLIC_CONTACTO_ADMIN_EMAIL` | Build de Vercel (frontend) | `equipo@reconstruyecol.org` |
 
