@@ -14,12 +14,14 @@ public final class OfertaMapper {
 
     public static Oferta toEntity(OfertaCrearRequest request) {
         Point ubicacion = GeoUtils.crearPunto(request.getLat(), request.getLng());
-        return new Oferta(
+        Oferta oferta = new Oferta(
                 request.getTipoAyuda(),
                 request.getDescripcion(),
                 ubicacion,
                 request.getContactoWhatsapp(),
                 request.getContactoEmail());
+        oferta.setOrganizacionId(request.getOrganizacionId());
+        return oferta;
     }
 
     public static OfertaResponse toResponse(Oferta oferta) {

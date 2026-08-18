@@ -1,5 +1,6 @@
 package com.reconstruyecol.ayudaterremoto.service;
 
+import com.reconstruyecol.ayudaterremoto.common.EstadoPublicacion;
 import com.reconstruyecol.ayudaterremoto.common.TipoAyuda;
 import com.reconstruyecol.ayudaterremoto.mapper.OfertaMapper;
 import com.reconstruyecol.ayudaterremoto.model.Oferta;
@@ -7,23 +8,28 @@ import com.reconstruyecol.ayudaterremoto.model.dto.OfertaCrearRequest;
 import com.reconstruyecol.ayudaterremoto.model.dto.OfertaCrearResponse;
 import com.reconstruyecol.ayudaterremoto.model.dto.OfertaResponse;
 import com.reconstruyecol.ayudaterremoto.repository.OfertaRepository;
+import com.reconstruyecol.ayudaterremoto.repository.OrganizacionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class OfertaService {
 
     private final OfertaRepository ofertaRepository;
+    private final OrganizacionRepository organizacionRepository;
 
-    public OfertaService(OfertaRepository ofertaRepository) {
+    public OfertaService(OfertaRepository ofertaRepository, OrganizacionRepository organizacionRepository) {
         this.ofertaRepository = ofertaRepository;
+        this.organizacionRepository = organizacionRepository;
     }
 
     @Transactional
     public OfertaCrearResponse crear(OfertaCrearRequest request) {
         validarContacto(request.getContactoWhatsapp(), request.getContactoEmail());
+        validarOrganizacion(request.getOrganizacionId());
 
         Oferta oferta = OfertaMapper.toEntity(request);
         oferta = ofertaRepository.save(oferta);
@@ -39,12 +45,29 @@ public class OfertaService {
                 .toList();
     }
 
+    @Transactional
+    public void marcarAtendida(UUID id, String token) {
+        Oferta oferta = ofertaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Oferta no encontrada"));
+        if (!oferta.getTokenGestion().equals(token)) {
+            throw new IllegalArgumentException("Token de gestión inválido");
+        }
+        oferta.setEstado(EstadoPublicacion.ATENDIDA);
+        ofertaRepository.save(oferta);
+    }
+
     private static void validarContacto(String whatsapp, String email) {
         boolean sinWhatsapp = whatsapp == null || whatsapp.isBlank();
         boolean sinEmail = email == null || email.isBlank();
         if (sinWhatsapp && sinEmail) {
             throw new IllegalArgumentException(
                     "Debe indicar al menos un medio de contacto: WhatsApp o correo");
+        }
+    }
+
+    private void validarOrganizacion(UUID organizacionId) {
+        if (organizacionId != null && !organizacionRepository.existsById(organizacionId)) {
+            throw new IllegalArgumentException("La organización indicada no existe");
         }
     }
 }

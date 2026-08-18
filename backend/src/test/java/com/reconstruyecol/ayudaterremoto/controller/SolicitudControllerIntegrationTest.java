@@ -174,6 +174,46 @@ class SolicitudControllerIntegrationTest {
         assertThat(noUrgentes).allSatisfy(s -> assertThat(s.getSolicitudesAgrupadas()).isEqualTo(1));
     }
 
+    @Test
+    void marcarAtendida_conTokenValido_cambiaEstadoYDesapareceDeLaBusqueda() {
+        SolicitudCrearRequest request = new SolicitudCrearRequest();
+        request.setTipoAyuda(TipoAyuda.AGUA);
+        request.setDescripcion("Solicitud para marcar atendida");
+        request.setLat(6.0);
+        request.setLng(-77.5);
+        request.setContactoEmail("contacto@example.com");
+        SolicitudCrearResponse creada =
+                restTemplate.postForEntity(urlBase(), request, SolicitudCrearResponse.class).getBody();
+
+        ResponseEntity<Void> respuesta = restTemplate.exchange(
+                urlBase() + "/" + creada.getId() + "/atendida?token=" + creada.getTokenGestion(),
+                org.springframework.http.HttpMethod.PATCH, null, Void.class);
+
+        assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        String url = urlBase() + "?lat=6.0&lng=-77.5&radio=1000&tipo=AGUA";
+        ResponseEntity<SolicitudResponse[]> busqueda = restTemplate.getForEntity(url, SolicitudResponse[].class);
+        assertThat(busqueda.getBody()).isEmpty();
+    }
+
+    @Test
+    void marcarAtendida_conTokenInvalido_retorna400() {
+        SolicitudCrearRequest request = new SolicitudCrearRequest();
+        request.setTipoAyuda(TipoAyuda.AGUA);
+        request.setDescripcion("Solicitud con token incorrecto");
+        request.setLat(6.1);
+        request.setLng(-77.6);
+        request.setContactoEmail("contacto@example.com");
+        SolicitudCrearResponse creada =
+                restTemplate.postForEntity(urlBase(), request, SolicitudCrearResponse.class).getBody();
+
+        ResponseEntity<Map> respuesta = restTemplate.exchange(
+                urlBase() + "/" + creada.getId() + "/atendida?token=token-incorrecto",
+                org.springframework.http.HttpMethod.PATCH, null, Map.class);
+
+        assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
     private void crear(TipoAyuda tipo, String descripcion, double lat, double lng) {
         SolicitudCrearRequest request = new SolicitudCrearRequest();
         request.setTipoAyuda(tipo);

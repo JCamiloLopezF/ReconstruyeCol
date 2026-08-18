@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -110,6 +111,46 @@ class OfertaControllerIntegrationTest {
         assertThat(response.getBody()).hasSize(1);
         assertThat(response.getBody()[0].getTipoAyuda()).isEqualTo(TipoAyuda.MEDICAMENTOS_SALUD);
         assertThat(response.getBody()[0].getDescripcion()).isEqualTo("Cerca del punto de busqueda");
+    }
+
+    @Test
+    void marcarAtendida_conTokenValido_cambiaEstadoYDesapareceDeLaBusqueda() {
+        OfertaCrearRequest request = new OfertaCrearRequest();
+        request.setTipoAyuda(TipoAyuda.TRANSPORTE);
+        request.setDescripcion("Oferta para marcar atendida");
+        request.setLat(6.0);
+        request.setLng(-77.5);
+        request.setContactoEmail("contacto@example.com");
+        OfertaCrearResponse creada =
+                restTemplate.postForEntity(urlBase(), request, OfertaCrearResponse.class).getBody();
+
+        ResponseEntity<Void> respuesta = restTemplate.exchange(
+                urlBase() + "/" + creada.getId() + "/atendida?token=" + creada.getTokenGestion(),
+                HttpMethod.PATCH, null, Void.class);
+
+        assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        String url = urlBase() + "?lat=6.0&lng=-77.5&radio=1000&tipo=TRANSPORTE";
+        ResponseEntity<OfertaResponse[]> busqueda = restTemplate.getForEntity(url, OfertaResponse[].class);
+        assertThat(busqueda.getBody()).isEmpty();
+    }
+
+    @Test
+    void marcarAtendida_conTokenInvalido_retorna400() {
+        OfertaCrearRequest request = new OfertaCrearRequest();
+        request.setTipoAyuda(TipoAyuda.TRANSPORTE);
+        request.setDescripcion("Oferta con token incorrecto");
+        request.setLat(6.1);
+        request.setLng(-77.6);
+        request.setContactoEmail("contacto@example.com");
+        OfertaCrearResponse creada =
+                restTemplate.postForEntity(urlBase(), request, OfertaCrearResponse.class).getBody();
+
+        ResponseEntity<Map> respuesta = restTemplate.exchange(
+                urlBase() + "/" + creada.getId() + "/atendida?token=token-incorrecto",
+                HttpMethod.PATCH, null, Map.class);
+
+        assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     private void crear(TipoAyuda tipo, String descripcion, double lat, double lng) {

@@ -53,6 +53,9 @@ public class Solicitud {
     @Column(name = "token_gestion", nullable = false, unique = true, length = 64)
     private String tokenGestion = UUID.randomUUID().toString();
 
+    @Column(name = "organizacion_id")
+    private UUID organizacionId;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -139,6 +142,14 @@ public class Solicitud {
 
     public String getTokenGestion() {
         return tokenGestion;
+    }
+
+    public UUID getOrganizacionId() {
+        return organizacionId;
+    }
+
+    public void setOrganizacionId(UUID organizacionId) {
+        this.organizacionId = organizacionId;
     }
 
     public Instant getCreatedAt() {

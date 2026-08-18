@@ -9,6 +9,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import java.util.UUID;
+
 public class OfertaCrearRequest {
 
     @NotNull(message = "El tipo de ayuda es obligatorio")
@@ -33,6 +35,9 @@ public class OfertaCrearRequest {
 
     @Email(message = "El correo no es válido. Verifica el formato nombre@dominio.com")
     private String contactoEmail;
+
+    /** Opcional: si la publica una organización ya autoregistrada (POST /api/organizaciones). */
+    private UUID organizacionId;
 
     public TipoAyuda getTipoAyuda() {
         return tipoAyuda;
@@ -80,5 +85,13 @@ public class OfertaCrearRequest {
 
     public void setContactoEmail(String contactoEmail) {
         this.contactoEmail = contactoEmail;
+    }
+
+    public UUID getOrganizacionId() {
+        return organizacionId;
+    }
+
+    public void setOrganizacionId(UUID organizacionId) {
+        this.organizacionId = organizacionId;
     }
 }

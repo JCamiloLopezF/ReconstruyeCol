@@ -14,12 +14,14 @@ public final class SolicitudMapper {
 
     public static Solicitud toEntity(SolicitudCrearRequest request) {
         Point ubicacion = GeoUtils.crearPunto(request.getLat(), request.getLng());
-        return new Solicitud(
+        Solicitud solicitud = new Solicitud(
                 request.getTipoAyuda(),
                 request.getDescripcion(),
                 ubicacion,
                 request.getContactoWhatsapp(),
                 request.getContactoEmail());
+        solicitud.setOrganizacionId(request.getOrganizacionId());
+        return solicitud;
     }
 
     public static SolicitudResponse toResponse(Solicitud solicitud) {

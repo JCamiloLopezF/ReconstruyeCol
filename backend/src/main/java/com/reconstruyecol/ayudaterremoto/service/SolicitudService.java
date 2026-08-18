@@ -1,17 +1,20 @@
 package com.reconstruyecol.ayudaterremoto.service;
 
+import com.reconstruyecol.ayudaterremoto.common.EstadoPublicacion;
 import com.reconstruyecol.ayudaterremoto.common.TipoAyuda;
 import com.reconstruyecol.ayudaterremoto.mapper.SolicitudMapper;
 import com.reconstruyecol.ayudaterremoto.model.Solicitud;
 import com.reconstruyecol.ayudaterremoto.model.dto.SolicitudCrearRequest;
 import com.reconstruyecol.ayudaterremoto.model.dto.SolicitudCrearResponse;
 import com.reconstruyecol.ayudaterremoto.model.dto.SolicitudResponse;
+import com.reconstruyecol.ayudaterremoto.repository.OrganizacionRepository;
 import com.reconstruyecol.ayudaterremoto.repository.SolicitudRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class SolicitudService {
@@ -21,14 +24,18 @@ public class SolicitudService {
     private static final int UMBRAL_URGENCIA = 3;
 
     private final SolicitudRepository solicitudRepository;
+    private final OrganizacionRepository organizacionRepository;
 
-    public SolicitudService(SolicitudRepository solicitudRepository) {
+    public SolicitudService(SolicitudRepository solicitudRepository,
+                             OrganizacionRepository organizacionRepository) {
         this.solicitudRepository = solicitudRepository;
+        this.organizacionRepository = organizacionRepository;
     }
 
     @Transactional
     public SolicitudCrearResponse crear(SolicitudCrearRequest request) {
         validarContacto(request.getContactoWhatsapp(), request.getContactoEmail());
+        validarOrganizacion(request.getOrganizacionId());
 
         // Se buscan las cercanas ANTES de guardar la nueva solicitud para no contarla dos veces.
         List<Solicitud> cercanas = solicitudRepository.buscarCercanas(
@@ -71,12 +78,29 @@ public class SolicitudService {
                 .toList();
     }
 
+    @Transactional
+    public void marcarAtendida(UUID id, String token) {
+        Solicitud solicitud = solicitudRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada"));
+        if (!solicitud.getTokenGestion().equals(token)) {
+            throw new IllegalArgumentException("Token de gestión inválido");
+        }
+        solicitud.setEstado(EstadoPublicacion.ATENDIDA);
+        solicitudRepository.save(solicitud);
+    }
+
     private static void validarContacto(String whatsapp, String email) {
         boolean sinWhatsapp = whatsapp == null || whatsapp.isBlank();
         boolean sinEmail = email == null || email.isBlank();
         if (sinWhatsapp && sinEmail) {
             throw new IllegalArgumentException(
                     "Debe indicar al menos un medio de contacto: WhatsApp o correo");
+        }
+    }
+
+    private void validarOrganizacion(UUID organizacionId) {
+        if (organizacionId != null && !organizacionRepository.existsById(organizacionId)) {
+            throw new IllegalArgumentException("La organización indicada no existe");
         }
     }
 }
